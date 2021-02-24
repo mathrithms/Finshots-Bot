@@ -2,11 +2,11 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-Host='localhost'#os.getenv('Host')
-User='root'#os.getenv('User')
-Passwd='1234'#os.getenv('Password')
-Database='Finshots'#os.getenv('Database')
-Table1='time_table'#os.getenv('Table1')
+Host=os.getenv('Host')
+User=os.getenv('User')
+Passwd=os.getenv('Password')
+Database=os.getenv('Database')
+Table1=os.getenv('Table1')
 
 import mysql.connector as sqltor
 mycon= sqltor.connect(host=Host,user=User,password=Passwd,database=Database)
