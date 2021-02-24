@@ -88,6 +88,6 @@ async def cornjob1():
 async def cornjob1()
     pass
 
-asyncio.get_event_loop().run_forever()
 TOKEN =os.getenv('DISCORD_TOKEN')
 client.run(TOKEN)
+asyncio.get_event_loop().run_forever()
