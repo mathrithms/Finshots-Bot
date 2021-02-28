@@ -31,7 +31,7 @@ articles = div.find_all('article')
 # updating news links in the database
 for item in articles:
     article = {\
-        'link' : "https:/finshots.in"+item.find('a')['href'],\
+        'link' : "https://finshots.in"+item.find('a')['href'],\
             'title' : item.find('img')['alt'],\
                 'link_date' : item.find('time')['datetime']}
     now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
@@ -42,7 +42,7 @@ for item in articles:
     except:
         pass
 
-print('links updated')
+print('database updated with fresh new articles!')
 # deleting articles older than 7 days from the database
 cur.execute('delete from articles where timestampdiff(day, link_date, curdate())>7 ;')
 db.commit()

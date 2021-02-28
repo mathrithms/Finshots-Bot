@@ -31,16 +31,16 @@ try:
 
     # creating table for channel ids and time
     cur.execute('create table channels (channel_id varchar(25) primary key, time time);')
-
-    #creating table for storing member ids and the time
-    cur.execute('create table members (member_id varchar(25) primary key, time time);')
-
+    
     # creating table for storing the links
     cur.execute('create table articles (links varchar(200) primary key, title varchar(200), link_date date, update_time datetime);')
 
     print('Database created succesfully')
 except:
     print('Some error occured while creating the database !')
+
+# feeding in articles
+os.system('link_updater.py')
 
 # closing the database connection
 cur.close()
