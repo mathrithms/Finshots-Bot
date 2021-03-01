@@ -97,8 +97,8 @@ async def start(ctx, time=None):
         if time is None:
             await ctx.send(
                 "Specify the time in HH:MM format (24 hr. clock format)")
-            msg = await client.wait_for('message', check=lambda
-                message: ctx.author == message.author)
+            msg = await client.wait_for(
+                'message', check=lambda message: ctx.author == message.author)
             time = msg.content
         cur.execute(
             f"insert into channels values('{channel_id}','{time + ':00'}');")
@@ -122,8 +122,8 @@ async def update_time(ctx, time=None):
         if time is None:
             await ctx.send(
                 "Specify the time in HH:MM format (24 hr. clock format)")
-            msg = await client.wait_for('message', check=lambda
-                message: message.author == ctx.author)
+            msg = await client.wait_for(
+                'message', check=lambda message: message.author == ctx.author)
             time = msg.content
         cur.execute(
             f"update channels set time='{time}' where"
