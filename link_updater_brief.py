@@ -45,10 +45,10 @@ for item in briefs:
 
 print('database updated with fresh new briefs!')
 
-# deleting articles older than 7 days from the database
-cur.execute(
-    'delete from articles where timestampdiff(day, link_date, curdate())>2 ;')
-db.commit()
+# #deleting articles older than 7 days from the database
+# cur.execute(
+#     'delete from articles where timestampdiff(day, link_date, curdate())>2 ;')
+# db.commit()
 
 # closing connection to the database
 cur.close()
