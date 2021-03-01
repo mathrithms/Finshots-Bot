@@ -10,10 +10,10 @@ from dotenv import load_dotenv
 # making the connection to database
 
 load_dotenv()
-User = os.getenv('USER')
-Host = os.getenv('HOST')
-Password = os.getenv('PASSWORD')
-Database = os.getenv('DATABASE')
+User = 'root'
+Host = 'localhost'
+Password = '12345'
+Database = 'finshots'
 
 db = mc.connect(user=User, host=Host, password=Password)
 cur = db.cursor()
@@ -43,11 +43,16 @@ cur.execute(
     'create table market (links_m varchar(200) primary key, title_m '
     'varchar(200), link_date_m date, update_time_m datetime);')
 
+
+# sql= 'select * from market limit 10;'
+# cur.execute(sql)
+
+
 print('Database created succesfully')
 
 # feeding in articles
 
-os.system('link_updater.py')
+#os.system('link_updater.py')
 os.system('link_updater_market.py')
 os.system('link_updater_brief.py')
 

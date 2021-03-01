@@ -11,10 +11,10 @@ from dotenv import load_dotenv
 
 # making the connection to database
 load_dotenv()
-User = os.getenv('USER')
-Host = os.getenv('HOST')
-Password = os.getenv('PASSWORD')
-Database = os.getenv('DATABASE')
+User = 'root'
+Host = 'localhost'
+Password = '12345'
+Database = 'finshots'
 
 db = mc.connect(user=User, host=Host, password=Password, database=Database)
 cur = db.cursor()
@@ -45,9 +45,9 @@ for item in briefs:
 
 print('database updated with fresh new briefs!')
 
-# deleting articles older than 7 days from the database
+# keeps only 10 latest articles
 cur.execute(
-    'delete from articles where timestampdiff(day, link_date, curdate())>2 ;')
+    'delete from brief where link_date_b not in(select link_date_b from(select link_date_b from brief order by link_date_b desc limit 10)fo);')
 db.commit()
 
 # closing connection to the database

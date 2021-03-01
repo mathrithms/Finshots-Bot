@@ -11,10 +11,10 @@ from dotenv import load_dotenv
 
 # making the connection to database
 load_dotenv()
-User = os.getenv('USER')
-Host = os.getenv('HOST')
-Password = os.getenv('PASSWORD')
-Database = os.getenv('DATABASE')
+User = 'root'
+Host = 'localhost'
+Password = '12345'
+Database = 'finshots'
 
 db = mc.connect(user=User, host=Host, password=Password, database=Database)
 cur = db.cursor()
@@ -45,9 +45,9 @@ for item in markets:
 
 print('database updated with fresh new market articles!')
 
-# deleting articles older than 7 days from the database
+# keeps only 10 latest articles
 cur.execute(
-    'delete from articles where timestampdiff(day, link_date, curdate())>2 ;')
+    'delete from market where link_date_m not in(select link_date_m from(select link_date_m from market order by link_date_m desc limit 10)foo);')
 db.commit()
 
 # closing connection to the database
