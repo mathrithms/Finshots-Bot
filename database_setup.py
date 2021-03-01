@@ -10,10 +10,10 @@ from dotenv import load_dotenv
 # making the connection to database
 
 load_dotenv()
-User = 'root'
-Host = 'localhost'
-Password = '12345'
-Database = 'finshots'
+User = os.getenv('USER')
+Host = os.getenv('HOST')
+Password = os.getenv('PASSWORD')
+Database = os.getenv('DATABASE')
 
 db = mc.connect(user=User, host=Host, password=Password)
 cur = db.cursor()
@@ -52,7 +52,7 @@ print('Database created succesfully')
 
 # feeding in articles
 
-#os.system('link_updater.py')
+os.system('link_updater.py')
 os.system('link_updater_market.py')
 os.system('link_updater_brief.py')
 

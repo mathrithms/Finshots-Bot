@@ -11,10 +11,10 @@ from dotenv import load_dotenv
 
 # making the connection to database
 load_dotenv()
-User = 'root'
-Host = 'localhost'
-Password = '12345'
-Database = 'finshots'
+User = os.getenv('USER')
+Host = os.getenv('HOST')
+Password = os.getenv('PASSWORD')
+Database = os.getenv('DATABASE')
 
 db = mc.connect(user=User, host=Host, password=Password, database=Database)
 cur = db.cursor()
