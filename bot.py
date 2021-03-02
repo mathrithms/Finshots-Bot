@@ -1,12 +1,15 @@
-# this is the file that will run 24*7 on the server
+"""this is the file that will run 24*7 on the server"""
+
+import asyncio
+import datetime
+import os
+import random
 
 import discord
-from discord.ext import commands, tasks
-
 import mysql.connector as mc
+from discord.ext import commands, tasks
+from discord.utils import find
 from dotenv import load_dotenv
-import os
-import datetime
 
 load_dotenv()
 
@@ -16,193 +19,221 @@ Host = os.getenv('HOST')
 Password = os.getenv('PASSWORD')
 Database = os.getenv('DATABASE')
 
-db = mc.connect(user = User, host = Host, password = Password, database = Database)
+db = mc.connect(user=User, host=Host, password=Password, database=Database)
 cur = db.cursor()
 
 # bot code
-prefix = os.getenv('PREFIX')
-client = commands.Bot(command_prefix = f"{prefix}")
+prefix = 'finshots '
+client = commands.Bot(
+    command_prefix=[f"{prefix}", "Finshots ", "FINSHOTS ", "finshot ",
+                    "Finshot ", "FINSHOT "], case_insensitive=True)
 
 
 @client.event
 async def on_ready():
-    '''this code runs when the bot comes online'''
+    """this code runs when the bot comes online"""
     print('Bot is online!')
 
-    # this task (piece of code) keep running in loop every 1 minute
-    # this will check every minute if the bot needs to send new articles to a channel or user, and if so send it
+    # this task (piece of code) keep running in loop every 1 minute this
+    # will check every minute if the bot needs to send new articles to a
+    # channel or user, and if so send it
     @tasks.loop(minutes=1)
     async def link_poster():
+        """checks every minute where to send links and sends it"""
 
         # extracting channel ids to send the articles at this time (minute)
-        cur = db.cursor()
-        cur.execute("select channel_id from channels where time_to_sec(timediff(curtime(),time)) between 0 and 59")
+        cur.execute(
+            "select channel_id from channels where time_to_sec(timediff("
+            "curtime(),time)) between 0 and 59")
         channelid = cur.fetchall()
 
-        # extracting user ids to send the articles at this time (minute)
-        cur = db.cursor()
-        cur.execute("select member_id from members where time_to_sec(timediff(curtime(),time)) between 0 and 59")
-        userid = cur.fetchall()
-        
-        # extracting the articles that are updated in the database withing past 24 hours from now
+        if len(channelid) == 0:
+            return
+
+        # extracting the articles that are updated in the database withing
+        # past 24 hours from now
         now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
-        cur.execute(f"select links, title, link_date from articles where timestampdiff(minute,'{now}',update_time) < 1440 ;")
+        cur.execute(
+            f"select links, title, link_date from articles where "
+            f"timestampdiff(minute,'{now}',update_time) < 1440 ;")
         articles = cur.fetchall()
 
         # sending the articles in the required channels
         for ch_id in channelid:
             channel = client.get_channel(int(ch_id[0]))
             for article in articles:
-                await channel.send(f'New Article on Finshots - {article[1]}')
-                await channel.send(f'Posted on - {article[2]}')
-                await channel.send(f'Read here - {article[0]}')
+                await channel.send(
+                    f'>>> **{article[1]}   |   {article[2]}**\n{article[0]}')
 
-        # sending the articles in the required dms
-        for ch_id in userid:
-            user = client.get_user(int(ch_id[0]))
-            for article in articles:
-                await user.send(f'New Article - {article[1]}')
-                await user.send(f'Posted on - {article[2]}')
-                await user.send(f'Link - {article[0]}')
-        
-    link_poster.start()  #starts this tasks
+    link_poster.start()  # starts the above task
+
+    # changes the activity/status of the bot on discord
+    while not client.is_closed():
+        names = {'playing': f"on {len(client.guilds)} servers",
+                 'listening': f"{prefix}help"}
+        types = {'playing': discord.ActivityType.playing,
+                 'listening': discord.ActivityType.listening}
+        activity = random.choice(['playing', 'listening'])
+        await client.change_presence(
+            activity=discord.Activity(type=types[activity],
+                                      name=names[activity]))
+        await asyncio.sleep(10)
 
 
 # BOT COMMANDS
 
-# commands for updates on server channels
+@client.command()
+async def start(ctx, time=None):
+    """start  Finshots updates in the channel/DM at a specified time
+    syntax -> start HH:MM (24 hr. clock format)"""
 
-@client.command(aliases=['reg'])
-async def register(ctx, channel:discord.TextChannel, time=None):
-
-    '''register a channel for Finshots updates on a server
-    syntax -> register #channel_mention HH:MM
-    alias  -> reg'''
-
-    if time == None:
-        await ctx.send("Specify the time in HH:MM format")
-        msg = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-        time = msg.content
-    channel_id = channel.id   
-
-    try:
-        cur.execute(f"insert into channels values('{channel_id}','{time+':00'}');")
+    channel_id = ctx.channel.id
+    cur.execute(f"select * from channels where channel_id = '{channel_id}';")
+    if cur.fetchall() != []:
+        await ctx.send(
+            "This channel/DM is already registered for Finshots updates! Use "
+            "the update_time command to update the time for updates")
+    else:
+        if time is None:
+            await ctx.send(
+                "Specify the time in HH:MM format (24 hr. clock format)")
+            msg = await client.wait_for(
+                'message', check=lambda message: ctx.author == message.author)
+            time = msg.content
+        cur.execute(
+            f"insert into channels values('{channel_id}','{time + ':00'}');")
         db.commit()
-        await ctx.send(f"Registered! Finshots updates will be received in {channel.mention} everyday at {time}")
-    except mc.errors.IntegrityError:
-        await ctx.send(f'{channel.mention} channel is already registered for updates!')
-    except:
-        await ctx.send("Some error ocuured! Try checking your command format")
+        await ctx.send(
+            f"Done! Finshots updates will be sent here everyday at {time}")
 
 
 @client.command()
-async def set_time(ctx, channel:discord.TextChannel, time=None):
-    
-    '''update time of a channel for Finshots updates
-    syntax -> set_time #channel_mention HH:MM'''
+async def update_time(ctx, time=None):
+    """update time of the channel/DM for the Finshots updates
+    syntax -> update_time HH:MM (24 hr. clock format)"""
 
-    channel_id = channel.id
+    channel_id = ctx.channel.id
     cur.execute(f"select * from channels where channel_id = '{channel_id}';")
     if cur.fetchall() == []:
-        await ctx.send(f"{channel.mention} channel is not registered! Use the register command to register the channel")
+        await ctx.send(
+            "This channel/DM is not registered for Finshots updates! Use the "
+            "start command to register the channel")
     else:
-        if time == None:
-            await ctx.send("Specify the time in HH:MM format")
-            msg = await client.wait_for('message', check=lambda message: message.author == ctx.author)
+        if time is None:
+            await ctx.send(
+                "Specify the time in HH:MM format (24 hr. clock format)")
+            msg = await client.wait_for(
+                'message', check=lambda message: message.author == ctx.author)
             time = msg.content
-        cur.execute(f"update channels set time='{time}' where channel_id='{channel_id}';")
+        cur.execute(
+            f"update channels set time='{time}' where"
+            f" channel_id='{channel_id}';")
         db.commit()
-        await ctx.send(f"Your time has been updated! {channel.mention} will now receive updates at {time}")
-
-    
-@client.command(aliases=['dereg'])
-async def deregister(ctx, channel:discord.TextChannel):
-
-    '''deregister a channel for Finshots updates
-    syntax -> deregister #channel_mention
-    alias  -> dereg'''
-
-    channel_id = channel.id
-    cur.execute(f"delete from channels  where channel_id='{channel_id}';")
-    db.commit()
-    if cur.rowcount==0:
-        await ctx.send(f"{channel.mention} was never registered for updates!")
-    else:
-        await ctx.send(f"Deregistered! {channel.mention} channel wont recieve updates from now !")
-
-
-# commands for updates on dm
-
-@client.command(aliases=['reg_me'])
-async def register_me(ctx, time=None):
-
-    '''register yourself for Finshots updates on DM
-    syntax -> register_me HH:MM
-    alias  -> reg_me'''
-
-    if time == None:
-        await ctx.send("Specify the time in HH:MM format")
-        msg = await client.wait_for('message', check=lambda message: message.author == ctx.author)
-        time = msg.content
-
-    user_id = ctx.author.id   
-    try:
-        cur.execute(f"insert into members values('{user_id}','{time+':00'}');")
-        db.commit()
-        await ctx.send(f"Registered! You will now receive Finshot Updatws in your DM everyday at {time}")
-    except mc.errors.IntegrityError:
-        await ctx.author.send('You are already registered for updates in DM!')
-    except:
-        await ctx.author.send("Some error ocuured! Try checking your command format")
+        await ctx.send(
+            f"Done! Finshots updates will now be sent here everyday at {time}")
 
 
 @client.command()
-async def set_my_time(ctx, time=None):
+async def stop(ctx):
+    """stop Finshots updates for the channel/DM
+    syntax -> stop"""
 
-    '''update time of yoour Finshots updates on DM
-    syntax -> set_my_time HH:MM'''
-
-    user_id = ctx.author.id
-    cur.execute(f"select * from members where member_id = '{user_id}';")
-    if cur.fetchall() == []:
-        await ctx.send(f"You are not registered for Finshots Updates! Use the register_me command to register!")
-    else:
-        if time == None:
-            await ctx.send("Specify the time in HH:MM format")
-            msg = await client.wait_for('message', check=lambda message: message.author == message.author)
-            time = msg.content
-        cur.execute(f"update members set time='{time}' where member_id='{user_id}';")
-        db.commit()
-        await ctx.send(f"Your time has been updated! You will now receive updates at {time}")
-
-
-@client.command(aliases=['dereg_me'])
-async def deregister_me(ctx):
-
-    '''deregister yourself for Finshots updates on DM
-    syntax -> deregister_me
-    alias  -> dereg_me'''
-
-    user_id = ctx.author.id
-    cur.execute(f"delete from members where member_id='{user_id}';")
+    channel_id = ctx.channel.id
+    cur.execute(f"delete from channels  where channel_id='{channel_id}';")
     db.commit()
-    if cur.rowcount==0:
-        await ctx.send("You were never registered for DM updates!")
+    if cur.rowcount == 0:
+        await ctx.send(
+            "This channel/DM was never registered for Finshots updates!")
     else:
-        await ctx.send("Deregistered! You wont recieve updates in DM from now !")
+        await ctx.send(
+            "Done! You won't recieve Finshots updates here from now")
 
 
+@client.command()
+async def latest(ctx):
+    """sends the latest articles stored in the bot database
+    syntax -> latest"""
 
-@client.command(aliases=['hi'])
-async def hello(ctx):
-    
-    '''bot replies with a hello to hello/hi'''
+    cur.execute(
+        'select * from articles where link_date = (select max(link_date) '
+        'from articles);')
+    articles = cur.fetchall()
 
-    await ctx.send(f'Hello {ctx.author.mention}, FINSHOTS_SCOUT here at your service')
+    for article in articles:
+        await ctx.send(
+            f'>>> **{article[1]}   |   {article[2]}**\n{article[0]}')
 
 
+# Help commands
 
-#launching the bot
+client.remove_command('help')
+
+
+@client.group(invoke_without_command=True)
+async def help(ctx):
+    """displays the help for the bot in an embed"""
+
+    colours = [discord.Colour.red(), discord.Colour.blue(),
+               discord.Colour.green(), discord.Colour.teal(),
+               discord.Colour.orange()]
+    em = discord.Embed(description="**FINSHOTS HELP**\n\n",
+                       colour=random.choice(colours))
+    em.add_field(name="**Description**",
+                 value="```This is a simple bot that can send updates (new "
+                       "articles) from FINSHOTS website to a specific "
+                       "channel in a server or to individual users on their "
+                       "DM everyday at the time specified by user.```\n",
+                 inline=False)
+    em.add_field(
+        name="**BOT COMMANDS:**  _(can be run in a both channels or in DM to "
+             "the bot)_",
+        value="```prefix : finshots```", inline=False)
+    em.add_field(name="start",
+                 value="```start  Finshots updates in the channel/DM at a "
+                       "specified time\nsyntax :  start HH:MM (24 hr. clock "
+                       "format)```",
+                 inline=False)
+    em.add_field(name="update_time",
+                 value="```update time of the channel/DM for the Finshots "
+                       "updates\nsyntax :  update_time HH:MM (24 hr. clock "
+                       "format)```",
+                 inline=False)
+    em.add_field(name="stop",
+                 value="```stop Finshots updates for the channel/DM\nsyntax "
+                       ":  stop```",
+                 inline=False)
+    em.add_field(name="latest",
+                 value="```sends the articles of the latest date\nsyntax :  "
+                       "latest```",
+                 inline=False)
+    await ctx.send(embed=em)
+
+
+@client.event
+async def on_guild_join(guild):
+    """bot will send a welcome message when it joins a server"""
+
+    general = find(lambda x: x.name == 'general', guild.text_channels)
+    if general:
+        title = "Greetings"
+        description = f"```Hello {guild.name}! I am a simple bot that can " \
+                      f"send updates (new articles) from FINSHOTS website to "\
+                      f"a specific channel in a server or to individual " \
+                      f"users on their DM eveyday at the time specified by " \
+                      f"user.``` "
+        em = discord.Embed(title=title, description=description,
+                           colour=discord.Colour.blue())
+        em.add_field(name="Use Help Command to learn how to use",
+                     value=f"```{prefix} help```", inline=False)
+        em.add_field(name="NOTE:",
+                     value="```This bot and all its commands work in server "
+                           "channels for server use as well as in DM for "
+                           "personal use. Feel free to right click the bot "
+                           "and click on message to DM the bot```",
+                     inline=False)
+        await general.send(embed=em)
+
+
+# launching the bot
 bot_token = os.getenv('DISCORD_TOKEN')
 client.run(bot_token)
-
