@@ -47,7 +47,9 @@ cur.execute(
 cur.execute(
     'create table infographics (img varchar(200) primary key, title'
     'varchar(200), link_date date, update_time datetime);'
-)
+
+
+
 
 
 print('Database created succesfully')
