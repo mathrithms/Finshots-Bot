@@ -49,7 +49,7 @@ for item in articles:
         pass
 
 
-# deleting articles older than 7 days from the database
+# keeps only articles of last 10 dates
 cur.execute(
     "delete from infographics where link_date not in"
     "(select link_date from(select link_date from infographics"
