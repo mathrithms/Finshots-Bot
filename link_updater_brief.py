@@ -47,7 +47,9 @@ print('database updated with fresh new briefs!')
 
 # keeps only 10 latest articles
 cur.execute(
-    'delete from brief where link_date_b not in(select link_date_b from(select link_date_b from brief order by link_date_b desc limit 10)fo);')
+    'delete from brief where link_date_b'
+    ' not in(select link_date_b from'
+    '(select link_date_b from brief order by link_date_b desc limit 10)fo);')
 db.commit()
 
 # closing connection to the database

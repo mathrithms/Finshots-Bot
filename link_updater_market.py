@@ -47,7 +47,9 @@ print('database updated with fresh new market articles!')
 
 # keeps only 10 latest articles
 cur.execute(
-    'delete from market where link_date_m not in(select link_date_m from(select link_date_m from market order by link_date_m desc limit 10)foo);')
+    'delete from market where link_date_m'
+    ' not in(select link_date_m from'
+    '(select link_date_m from market order by link_date_m desc limit 10)foo);')
 db.commit()
 
 # closing connection to the database
