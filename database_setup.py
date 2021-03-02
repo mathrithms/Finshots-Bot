@@ -28,20 +28,26 @@ cur.execute(
     'create table channels (channel_id varchar(25) primary key, '
     'time time);')
 
-# creating table for storing the finshot daily links
+# creating table for storing the links
 cur.execute(
     'create table articles (links varchar(200) primary key, title '
     'varchar(200), link_date date, update_time datetime);')
 
-# creating table for storing the finshot brief links
+
 cur.execute(
     'create table brief (links_b varchar(200) primary key, title_b '
     'varchar(200), link_date_b date, update_time_b datetime);')
 
-# creating table for storing the finshot market links
+
 cur.execute(
     'create table market (links_m varchar(200) primary key, title_m '
     'varchar(200), link_date_m date, update_time_m datetime);')
+
+
+cur.execute(
+    'create table infographics (img varchar(200) primary key, title'
+    'varchar(200), link_date date, update_time datetime);'
+)
 
 
 # sql= 'select * from market limit 10;'
@@ -55,6 +61,7 @@ print('Database created succesfully')
 os.system('link_updater.py')
 os.system('link_updater_market.py')
 os.system('link_updater_brief.py')
+os.system('infographics_updater.py')
 
 # closing the database connection
 cur.close()
