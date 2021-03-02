@@ -50,10 +50,6 @@ cur.execute(
 )
 
 
-# sql= 'select * from market limit 10;'
-# cur.execute(sql)
-
-
 print('Database created succesfully')
 
 # feeding in articles
