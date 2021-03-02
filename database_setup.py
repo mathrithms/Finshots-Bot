@@ -33,11 +33,16 @@ cur.execute(
     'create table articles (links varchar(200) primary key, title '
     'varchar(200), link_date date, update_time datetime);')
 
+cur.execute(
+    'create table infographics (img varchar(200) primary key, title'
+    'varchar(200), link_date date, update_time datetime);'
+)
+
 print('Database created succesfully')
 
 # feeding in articles
 os.system('link_updater.py')
-
+os.system('infographics_updater.py')
 # closing the database connection
 cur.close()
 db.close()
