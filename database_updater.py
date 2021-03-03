@@ -40,10 +40,13 @@ for url in URL:
     for item in articles:
         # scrapping the data
         article = {
-            'link': "https://finshots.in" + item.find('a')['href'],
             'title': item.find('img')['alt'],
             'link_date': item.find('time')['datetime']
         }
+        if URL[url] == 'infographic':
+            article['link'] = item.find('img')['src']
+        else:
+            article['link'] = "https://finshots.in" + item.find('a')['href']
 
         now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
 
@@ -54,9 +57,8 @@ for url in URL:
             val = (article['link'], article['title'],
                    URL[url], article['link_date'], now)
             cur.execute(sql, val)
-
-
             db.commit()
+
         except (mc.errors.IntegrityError, mc.errors.ProgrammingError):
             pass
 
