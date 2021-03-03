@@ -49,7 +49,6 @@ for url in URL:
 
         # updating links into articles table
         try:
-
             sql = ("insert into articles values(%s,%s,%s, %s, %s);")
             val = (article['link'], article['title'],
                    URL[url], article['link_date'], now)
