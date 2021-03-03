@@ -49,10 +49,12 @@ for url in URL:
 
         # updating links into articles table
         try:
-            cur.execute(
-                f"insert into articles values('{article['link']}',"
-                f"'{article['title']}', '{URL[url]}','{article['link_date']}',"
-                f"'{now}');")
+
+            sql = ("insert into articles values(%s,%s,%s, %s, %s);")
+            val = (article['link'], article['title'],
+                   URL[url], article['link_date'], now)
+            cur.execute(sql, val)
+
 
             db.commit()
         except (mc.errors.IntegrityError, mc.errors.ProgrammingError):
