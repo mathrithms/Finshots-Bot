@@ -54,9 +54,8 @@ for url in URL:
             val = (article['link'], article['title'],
                    URL[url], article['link_date'], now)
             cur.execute(sql, val)
-
-
             db.commit()
+            
         except (mc.errors.IntegrityError, mc.errors.ProgrammingError):
             pass
 
