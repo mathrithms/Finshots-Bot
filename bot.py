@@ -53,26 +53,41 @@ async def on_ready():
         # extracting the articles that are updated in the database withing
         # past 24 hours from now
         now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
-        cur.execute(
-            f"select links, title, link_date from articles where "
-            f"timestampdiff(minute,'{now}',update_time) < 1440 ;")
-        articles = cur.fetchall()
+
+        category = ['archive', 'brief', 'markets', 'infographic']
+        articles = []
+        for value in category:
+            cur.execute(
+                "select links, title, category, link_date from articles "
+                f"where timestampdiff(minute,'{now}',update_time) < 1440 and"
+                f" category='{value}';")
+            articles += cur.fetchall()
 
         # sending the articles in the required channels
         for ch_id in channelid:
             channel = client.get_channel(int(ch_id[0]))
+
             for article in articles:
-                await channel.send(
-                    f'>>> **{article[1]}   |   {article[2]}**\n{article[0]}')
+                if article[2] == 'archive':
+                    await channel.send(
+                        f'>>> **{article[1]}   |   '
+                        f'{article[3]}**\n{article[0]}')
+                else:
+                    await channel.send(
+                        f'>>> **Finshots {(article[2]).upper()}**\n'
+                        f'**{article[1]}   |   '
+                        f'{article[3]}**\n{article[0]}')
 
     link_poster.start()  # starts the above task
 
     # changes the activity/status of the bot on discord
     while not client.is_closed():
-        names = {'playing': f"on {len(client.guilds)} servers",
-                 'listening': f"{prefix}help"}
-        types = {'playing': discord.ActivityType.playing,
-                 'listening': discord.ActivityType.listening}
+        names = {
+            'playing': f"on {len(client.guilds)} servers",
+            'listening': f"{prefix}help"}
+        types = {
+            'playing': discord.ActivityType.playing,
+            'listening': discord.ActivityType.listening}
         activity = random.choice(['playing', 'listening'])
         await client.change_presence(
             activity=discord.Activity(type=types[activity],
@@ -82,7 +97,7 @@ async def on_ready():
 
 # BOT COMMANDS
 
-@client.command()
+@ client.command()
 async def start(ctx, time=None):
     """start  Finshots updates in the channel/DM at a specified time
     syntax -> start HH:MM (24 hr. clock format)"""
@@ -107,7 +122,7 @@ async def start(ctx, time=None):
             f"Done! Finshots updates will be sent here everyday at {time}")
 
 
-@client.command()
+@ client.command()
 async def update_time(ctx, time=None):
     """update time of the channel/DM for the Finshots updates
     syntax -> update_time HH:MM (24 hr. clock format)"""
@@ -133,7 +148,7 @@ async def update_time(ctx, time=None):
             f"Done! Finshots updates will now be sent here everyday at {time}")
 
 
-@client.command()
+@ client.command()
 async def stop(ctx):
     """stop Finshots updates for the channel/DM
     syntax -> stop"""
@@ -149,19 +164,19 @@ async def stop(ctx):
             "Done! You won't recieve Finshots updates here from now")
 
 
-@client.command()
-async def latest(ctx):
-    """sends the latest articles stored in the bot database
-    syntax -> latest"""
+@ client.command()
+async def latest(ctx, category='archive'):
+    """sends the latest articles of the specified category stored in
+    the bot database syntax -> latest"""
 
     cur.execute(
-        'select * from articles where link_date = (select max(link_date) '
-        'from articles);')
+        f"select * from articles where category='{category}' and link_date = "
+        f"(select max(link_date) from articles where category='{category}');")
     articles = cur.fetchall()
 
     for article in articles:
         await ctx.send(
-            f'>>> **{article[1]}   |   {article[2]}**\n{article[0]}')
+            f'>>> **{article[1]}   |   {article[3]}**\n{article[0]}')
 
 
 # Help commands
@@ -169,68 +184,79 @@ async def latest(ctx):
 client.remove_command('help')
 
 
-@client.group(invoke_without_command=True)
+@ client.group(invoke_without_command=True)
 async def help(ctx):
     """displays the help for the bot in an embed"""
 
     colours = [discord.Colour.red(), discord.Colour.blue(),
                discord.Colour.green(), discord.Colour.teal(),
                discord.Colour.orange()]
-    em = discord.Embed(description="**FINSHOTS HELP**\n\n",
-                       colour=random.choice(colours))
-    em.add_field(name="**Description**",
-                 value="```This is a simple bot that can send updates (new "
-                       "articles) from FINSHOTS website to a specific "
-                       "channel in a server or to individual users on their "
-                       "DM everyday at the time specified by user.```\n",
-                 inline=False)
+    em = discord.Embed(
+        description="**FINSHOTS HELP**\n\n",
+        colour=random.choice(colours)
+    )
     em.add_field(
-        name="**BOT COMMANDS:**  _(can be run in a both channels or in DM to "
-             "the bot)_",
+        name="**Description**",
+        value="```This is a simple bot that can send updates (new "
+        "articles) from FINSHOTS website to a specific "
+        "channel in a server or to individual users on their "
+        "DM everyday at the time specified by user.```\n",
+        inline=False
+    )
+    em.add_field(
+        name="**BOT COMMANDS:**  _(can be run in a both channels or "
+        "in DM to the bot)_",
         value="```prefix : finshots```", inline=False)
-    em.add_field(name="start",
-                 value="```start  Finshots updates in the channel/DM at a "
-                       "specified time\nsyntax :  start HH:MM (24 hr. clock "
-                       "format)```",
-                 inline=False)
-    em.add_field(name="update_time",
-                 value="```update time of the channel/DM for the Finshots "
-                       "updates\nsyntax :  update_time HH:MM (24 hr. clock "
-                       "format)```",
-                 inline=False)
-    em.add_field(name="stop",
-                 value="```stop Finshots updates for the channel/DM\nsyntax "
-                       ":  stop```",
-                 inline=False)
-    em.add_field(name="latest",
-                 value="```sends the articles of the latest date\nsyntax :  "
-                       "latest```",
-                 inline=False)
+    em.add_field(
+        name="start",
+        value="```start  Finshots updates in the channel/DM at a "
+        "specified time\nsyntax :  start HH:MM (24 hr. clock "
+        "format)```",
+        inline=False
+    )
+    em.add_field(
+        name="update_time",
+        value="```update time of the channel/DM for the Finshots "
+        "updates\nsyntax :  update_time HH:MM (24 hr. clock "
+        "format)```",
+        inline=False
+    )
+    em.add_field(
+        name="stop",
+        value="```stop Finshots updates for the channel/DM\nsyntax "
+        ":  stop```",
+        inline=False)
+    em.add_field(
+        name="latest",
+        value="```sends the articles of the latest date\nsyntax :  "
+        "latest```",
+        inline=False)
     await ctx.send(embed=em)
 
 
-@client.event
+@ client.event
 async def on_guild_join(guild):
     """bot will send a welcome message when it joins a server"""
 
     general = find(lambda x: x.name == 'general', guild.text_channels)
     if general:
         title = "Greetings"
-        description = f"```Hello {guild.name}! I am a simple bot that can " \
-                      f"send updates (new articles) from FINSHOTS website to "\
-                      f"a specific channel in a server or to individual " \
-                      f"users on their DM eveyday at the time specified by " \
-                      f"user.``` "
+        description = f"```Hello {guild.name}! I am a simple bot that can "
+        "send updates (new articles) from FINSHOTS website to "
+        "a specific channel in a server or to individual "
+        "users on their DM eveyday at the time specified by "
+        "user.``` "
         em = discord.Embed(title=title, description=description,
                            colour=discord.Colour.blue())
         em.add_field(name="Use Help Command to learn how to use",
                      value=f"```{prefix} help```", inline=False)
-        em.add_field(name="NOTE:",
-                     value="```This bot and all its commands work in server "
-                           "channels for server use as well as in DM for "
-                           "personal use. Feel free to right click the bot "
-                           "and click on message to DM the bot```",
-                     inline=False)
+        em.add_field(
+            name="NOTE:",
+            value="```This bot and all its commands work in server "
+            "channels for server use as well as in DM for "
+            "personal use. Feel free to right click the bot "
+            "and click on message to DM the bot```",
+            inline=False)
         await general.send(embed=em)
 
 
