@@ -54,7 +54,7 @@ async def on_ready():
         # past 24 hours from now
         now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
 
-        category = ['daily', 'brief', 'markets', 'infographic']
+        category = ['daily', 'brief', 'markets', 'infographics']
         articles = []
         for value in category:
             cur.execute(
@@ -68,7 +68,7 @@ async def on_ready():
             channel = client.get_channel(int(ch_id[0]))
 
             for article in articles:
-                if article[2] == 'infographic':
+                if article[2] == 'infographics':
                     await channel.send(
                         f'> **FINSHOTS {(article[2]).upper()}**\n'
                         f'> {article[1]}   **|**   '
@@ -169,7 +169,11 @@ async def stop(ctx):
 @ client.command()
 async def latest(ctx, category='daily'):
     """sends the latest articles of the specified category stored in
-    the bot database syntax -> latest"""
+    the bot database syntax -> latest <category name>"""
+
+    typos={'briefs':'brief','market':'markets','infographic':'infographics'}
+    if category in typos.keys():
+        category = typos[category]
 
     cur.execute(
         f"select * from articles where category='{category}' and link_date = "
@@ -177,7 +181,7 @@ async def latest(ctx, category='daily'):
     articles = cur.fetchall()
 
     for article in articles:
-        if article[2] == 'infographic':
+        if article[2] == 'infographics':
             await ctx.send(
                 f'> **FINSHOTS {(article[2]).upper()}**\n'
                 f'> {article[1]}   **|**   '
@@ -193,7 +197,6 @@ async def latest(ctx, category='daily'):
 # Help commands
 
 client.remove_command('help')
-
 
 @ client.group(invoke_without_command=True)
 async def help(ctx):
@@ -239,8 +242,9 @@ async def help(ctx):
         inline=False)
     em.add_field(
         name="latest",
-        value="```sends the articles of the latest date\nsyntax :  "
-        "latest```",
+        value="```sends the latest articles of the specified category stored in"
+        "the bot database\nsyntax :  latest <category name> (optional argument)"
+        "\ncategory names :  daily, markets, brief, infographics```",
         inline=False)
     await ctx.send(embed=em)
 

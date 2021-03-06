@@ -24,7 +24,7 @@ URL = {
     "https://finshots.in/archive": "daily",
     "https://finshots.in/brief/": "brief",
     "https://finshots.in/markets/": "markets",
-    "https://finshots.in/infographic/": "infographic"
+    "https://finshots.in/infographic/": "infographics"
 }
 
 # inserting data for each category
@@ -43,7 +43,7 @@ for url in URL:
             'title': item.find('img')['alt'],
             'link_date': item.find('time')['datetime']
         }
-        if URL[url] == 'infographic':
+        if URL[url] == 'infographics':
             article['link'] = item.find('img')['src']
         else:
             article['link'] = "https://finshots.in" + item.find('a')['href']
