@@ -82,6 +82,24 @@ async def on_ready():
 
     link_poster.start()  # starts the above task
 
+    @tasks.loop(hours=24)
+    async def repo():
+        """Sends the repository link with a probability of 1/200 each day"""
+
+        # extracting all channel ids
+        cur.execute("select channel_id from channels")
+        channelid = cur.fetchall()
+
+        # sending the repo link randomly with low probability
+        for ch_id in channelid:
+            channel = client.get_channel(int(ch_id[0]))
+            p = random.randint(1, 200)
+            if p == 101:
+                await channel.send(
+                    ">>> Check out our Github Repository :"
+                    "\nhttps://github.com/mathrithms/Finshots-Bot")
+    repo.start()
+
     # changes the activity/status of the bot on discord
     while not client.is_closed():
         names = {
