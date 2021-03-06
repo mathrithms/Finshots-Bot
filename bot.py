@@ -171,7 +171,11 @@ async def latest(ctx, category='daily'):
     """sends the latest articles of the specified category stored in
     the bot database syntax -> latest <category name>"""
 
-    typos={'briefs':'brief','market':'markets','infographic':'infographics'}
+    typos = {
+        'briefs': 'brief',
+        'market': 'markets',
+        'infographic': 'infographics'
+        }
     if category in typos.keys():
         category = typos[category]
 
@@ -197,6 +201,7 @@ async def latest(ctx, category='daily'):
 # Help commands
 
 client.remove_command('help')
+
 
 @ client.group(invoke_without_command=True)
 async def help(ctx):
@@ -242,8 +247,9 @@ async def help(ctx):
         inline=False)
     em.add_field(
         name="latest",
-        value="```sends the latest articles of the specified category stored in"
-        "the bot database\nsyntax :  latest <category name> (optional argument)"
+        value="```sends the latest articles of the specified category stored"
+        " in the bot database"
+        "\nsyntax :  latest <category name> (optional argument)"
         "\ncategory names :  daily, markets, brief, infographics```",
         inline=False)
     await ctx.send(embed=em)
