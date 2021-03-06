@@ -54,7 +54,7 @@ async def on_ready():
         # past 24 hours from now
         now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
 
-        category = ['archive', 'brief', 'markets', 'infographic']
+        category = ['daily', 'brief', 'markets', 'infographic']
         articles = []
         for value in category:
             cur.execute(
@@ -68,15 +68,17 @@ async def on_ready():
             channel = client.get_channel(int(ch_id[0]))
 
             for article in articles:
-                if article[2] == 'archive':
+                if article[2] == 'infographic':
                     await channel.send(
-                        f'>>> **{article[1]}   |   '
-                        f'{article[3]}**\n{article[0]}')
+                        f'> **FINSHOTS {(article[2]).upper()}**\n'
+                        f'> {article[1]}   **|**   '
+                        f'`{article[3]}`')
+                    await channel.send(article[0])
                 else:
                     await channel.send(
-                        f'>>> **Finshots {(article[2]).upper()}**\n'
-                        f'**{article[1]}   |   '
-                        f'{article[3]}**\n{article[0]}')
+                        f'>>> **FINSHOTS {(article[2]).upper()}**\n'
+                        f'{article[1]}   **|**   '
+                        f'`{article[3]}`\n{article[0]}')
 
     link_poster.start()  # starts the above task
 
@@ -165,7 +167,7 @@ async def stop(ctx):
 
 
 @ client.command()
-async def latest(ctx, category='archive'):
+async def latest(ctx, category='daily'):
     """sends the latest articles of the specified category stored in
     the bot database syntax -> latest"""
 
@@ -175,8 +177,17 @@ async def latest(ctx, category='archive'):
     articles = cur.fetchall()
 
     for article in articles:
-        await ctx.send(
-            f'>>> **{article[1]}   |   {article[3]}**\n{article[0]}')
+        if article[2] == 'infographic':
+            await ctx.send(
+                f'> **FINSHOTS {(article[2]).upper()}**\n'
+                f'> {article[1]}   **|**   '
+                f'`{article[3]}`')
+            await ctx.send(article[0])
+        else:
+            await ctx.send(
+                f'>>> **FINSHOTS {(article[2]).upper()}**\n'
+                f'{article[1]}   **|**   '
+                f'`{article[3]}`\n{article[0]}')
 
 
 # Help commands
