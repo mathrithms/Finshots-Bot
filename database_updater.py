@@ -21,10 +21,10 @@ cur = db.cursor()
 
 # storing links to be scrapped
 URL = {
-    "https://finshots.in/archive": "archive",
+    "https://finshots.in/archive": "daily",
     "https://finshots.in/brief/": "brief",
     "https://finshots.in/markets/": "markets",
-    "https://finshots.in/infographic/": "infographic"
+    "https://finshots.in/infographic/": "infographics"
 }
 
 # inserting data for each category
@@ -43,7 +43,7 @@ for url in URL:
             'title': item.find('img')['alt'],
             'link_date': item.find('time')['datetime']
         }
-        if URL[url] == 'infographic':
+        if URL[url] == 'infographics':
             article['link'] = item.find('img')['src']
         else:
             article['link'] = "https://finshots.in" + item.find('a')['href']
@@ -62,7 +62,7 @@ for url in URL:
             pass
 
     # deleting data that is not required
-    if URL[url] == 'archive':
+    if URL[url] == 'daily':
         # storing only the links that were updated in last 3 days for archives
         cur.execute(
             f"delete from articles where category='{URL[url]}' and"
