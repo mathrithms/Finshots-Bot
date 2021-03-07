@@ -254,7 +254,7 @@ async def help(ctx):
     em.add_field(
         name="update_time",
         value="```update time of the channel/DM for the Finshots "
-        "updates\nsyntax :  update_time HH:MM (24 hr. clock "
+        "updates\nsyntax :  update_time HH:MM Asia/Kolkata (24 hr. clock "
         "format)```",
         inline=False
     )
