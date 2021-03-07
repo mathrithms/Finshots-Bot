@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """this is the file that will run 24*7 on the server"""
 
 import asyncio
