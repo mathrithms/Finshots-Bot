@@ -1,6 +1,4 @@
-![mathrithms-192x192](https://user-images.githubusercontent.com/40313233/110236295-01918e80-7f5b-11eb-840f-e694648bd298.png)
-![heart](https://user-images.githubusercontent.com/40313233/110236578-88933680-7f5c-11eb-942f-ab32f46499d8.png)
-![finshots](https://user-images.githubusercontent.com/40313233/110236596-9cd73380-7f5c-11eb-8dcd-d7e1ac3fb49e.png)
+![banner](https://user-images.githubusercontent.com/40313233/110239339-6e615480-7f6c-11eb-9608-09281c947088.png)
 
 
 # Finshots Bot (Discord) 
