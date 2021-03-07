@@ -14,10 +14,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # making the connection to database
-User = os.getenv('USER')
-Host = os.getenv('HOST')
-Password = os.getenv('PASSWORD')
-Database = os.getenv('DATABASE')
+User = os.getenv('DB_USER')
+Host = os.getenv('DB_HOST')
+Password = os.getenv('DB_PASSWORD')
+Database = os.getenv('DB_DATABASE')
 
 db = mc.connect(user=User, host=Host, password=Password, database=Database)
 cur = db.cursor()
