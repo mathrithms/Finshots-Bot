@@ -53,7 +53,7 @@ async def on_ready():
 
         # extracting the articles that are updated in the database withing
         # past 24 hours from now
-        now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
+        #now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
 
         category = ['daily', 'brief', 'markets', 'infographics']
         articles = []
