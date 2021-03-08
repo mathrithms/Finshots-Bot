@@ -60,7 +60,7 @@ async def on_ready():
         for value in category:
             cur.execute(
                 "select links, title, category, link_date from articles "
-                f"where timestampdiff(minute,'{now}',update_time) < 1440 and"
+                f"where '{now}'>=update_time>'{now}'- Interval 1 day and"
                 f" category='{value}';")
             articles += cur.fetchall()
 
