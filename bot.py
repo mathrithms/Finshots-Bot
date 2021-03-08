@@ -2,7 +2,7 @@
 """this is the file that will run 24*7 on the server"""
 
 import asyncio
-import datetime
+# import datetime
 import os
 import random
 
@@ -53,14 +53,14 @@ async def on_ready():
 
         # extracting the articles that are updated in the database withing
         # past 24 hours from now
-        now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
+        # now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
 
         category = ['daily', 'brief', 'markets', 'infographics']
         articles = []
         for value in category:
             cur.execute(
                 "select links, title, category, link_date from articles "
-                f"where update_time>'{now}'- Interval 1 day and"
+                f"where link_date=curdate() and"
                 f" category='{value}';")
             articles += cur.fetchall()
 
