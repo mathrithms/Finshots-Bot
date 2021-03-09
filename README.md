@@ -10,7 +10,24 @@ if hyper link on image does not work, use the link [https://discord.com/oauth2/a
 
 # Commands
 ```
-finshots help
+Prefix for the commands (add this before all commands): finshots
+These commands can be run on any server channel or in DM to the bot.
+
+help --> displays a help message with all intructions to use the bot and the commands
+syntax :  help
+
+start --> start  Finshots updates in the channel/DM at a specified time
+syntax :  start HH:MM (24 hr. clock format)
+
+update_time --> update time of the channel/DM for the Finshots updates
+syntax :  update_time HH:MM Asia/Kolkata (24 hr. clock format)
+
+stop --> stop Finshots updates for the channel/DM
+syntax :  stop
+
+latest --> sends the latest articles of the specified category stored in the bot database
+syntax :  latest <category name> (optional argument)
+category names :  daily, markets, brief, infographics
 ```
 
 # Join Mathrithms Opensource Community
