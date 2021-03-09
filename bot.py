@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """this is the file that will run 24*7 on the server"""
 
 import asyncio
@@ -14,10 +15,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # making the connection to database
-User = os.getenv('USER')
-Host = os.getenv('HOST')
-Password = os.getenv('PASSWORD')
-Database = os.getenv('DATABASE')
+User = os.getenv('DB_USER')
+Host = os.getenv('DB_HOST')
+Password = os.getenv('DB_PASSWORD')
+Database = os.getenv('DB_DATABASE')
 
 db = mc.connect(user=User, host=Host, password=Password, database=Database)
 cur = db.cursor()
@@ -54,13 +55,12 @@ async def on_ready():
         # past 24 hours from now
         now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
 
-        category = ['archive', 'brief', 'markets', 'infographic']
+        category = ['daily', 'brief', 'markets', 'infographics']
         articles = []
         for value in category:
             cur.execute(
                 "select links, title, category, link_date from articles "
-                f"where timestampdiff(minute,'{now}',update_time) < 1440 and"
-                f" category='{value}';")
+                f"where category='{value}' and timestampdiff(minute, update_time, '{now}') < 1440;")
             articles += cur.fetchall()
 
         # sending the articles in the required channels
@@ -68,17 +68,37 @@ async def on_ready():
             channel = client.get_channel(int(ch_id[0]))
 
             for article in articles:
-                if article[2] == 'archive':
+                if article[2] == 'infographics':
                     await channel.send(
-                        f'>>> **{article[1]}   |   '
-                        f'{article[3]}**\n{article[0]}')
+                        f'> **FINSHOTS {(article[2]).upper()}**\n'
+                        f'> {article[1]}   **|**   '
+                        f'`{article[3]}`')
+                    await channel.send(article[0])
                 else:
                     await channel.send(
-                        f'>>> **Finshots {(article[2]).upper()}**\n'
-                        f'**{article[1]}   |   '
-                        f'{article[3]}**\n{article[0]}')
+                        f'>>> **FINSHOTS {(article[2]).upper()}**\n'
+                        f'{article[1]}   **|**   '
+                        f'`{article[3]}`\n{article[0]}')
 
     link_poster.start()  # starts the above task
+
+    @tasks.loop(hours=24)
+    async def repo():
+        """Sends the repository link with a probability of 1/200 each day"""
+
+        # extracting all channel ids
+        cur.execute("select channel_id from channels")
+        channelid = cur.fetchall()
+
+        # sending the repo link randomly with low probability
+        for ch_id in channelid:
+            channel = client.get_channel(int(ch_id[0]))
+            p = random.randint(1, 200)
+            if p == 101:
+                await channel.send(
+                    ">>> Check out our Github Repository :"
+                    "\nhttps://github.com/mathrithms/Finshots-Bot")
+    repo.start()
 
     # changes the activity/status of the bot on discord
     while not client.is_closed():
@@ -165,9 +185,17 @@ async def stop(ctx):
 
 
 @ client.command()
-async def latest(ctx, category='archive'):
+async def latest(ctx, category='daily'):
     """sends the latest articles of the specified category stored in
-    the bot database syntax -> latest"""
+    the bot database syntax -> latest <category name>"""
+
+    typos = {
+        'briefs': 'brief',
+        'market': 'markets',
+        'infographic': 'infographics'
+        }
+    if category in typos.keys():
+        category = typos[category]
 
     cur.execute(
         f"select * from articles where category='{category}' and link_date = "
@@ -175,8 +203,17 @@ async def latest(ctx, category='archive'):
     articles = cur.fetchall()
 
     for article in articles:
-        await ctx.send(
-            f'>>> **{article[1]}   |   {article[3]}**\n{article[0]}')
+        if article[2] == 'infographics':
+            await ctx.send(
+                f'> **FINSHOTS {(article[2]).upper()}**\n'
+                f'> {article[1]}   **|**   '
+                f'`{article[3]}`')
+            await ctx.send(article[0])
+        else:
+            await ctx.send(
+                f'>>> **FINSHOTS {(article[2]).upper()}**\n'
+                f'{article[1]}   **|**   '
+                f'`{article[3]}`\n{article[0]}')
 
 
 # Help commands
@@ -217,7 +254,7 @@ async def help(ctx):
     em.add_field(
         name="update_time",
         value="```update time of the channel/DM for the Finshots "
-        "updates\nsyntax :  update_time HH:MM (24 hr. clock "
+        "updates\nsyntax :  update_time HH:MM Asia/Kolkata (24 hr. clock "
         "format)```",
         inline=False
     )
@@ -228,8 +265,10 @@ async def help(ctx):
         inline=False)
     em.add_field(
         name="latest",
-        value="```sends the articles of the latest date\nsyntax :  "
-        "latest```",
+        value="```sends the latest articles of the specified category stored"
+        " in the bot database"
+        "\nsyntax :  latest <category name> (optional argument)"
+        "\ncategory names :  daily, markets, brief, infographics```",
         inline=False)
     await ctx.send(embed=em)
 
