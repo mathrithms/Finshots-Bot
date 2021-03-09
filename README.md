@@ -18,5 +18,8 @@ finshots help
 ](https://discord.gg/8unf2cnE28) <br>
 if hyper link on image does not work, use the link [https://discord.gg/8unf2cnE28](https://discord.gg/8unf2cnE28t)
 
+# How to Contribute?
+Look for open issues and try to solve them, for discussion or any other help from community join our Discord Channel.
+
 # Special Thanks 
 [Devlup labs](https://devluplabs.ml/)
