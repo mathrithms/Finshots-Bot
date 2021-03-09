@@ -60,7 +60,8 @@ async def on_ready():
         for value in category:
             cur.execute(
                 "select links, title, category, link_date from articles "
-                f"where category='{value}' and timestampdiff(minute, update_time, '{now}') < 1440;")
+                f"where category='{value}' and "
+                f"timestampdiff(minute, update_time, '{now}') < 1440;")
             articles += cur.fetchall()
 
         # sending the articles in the required channels
@@ -280,11 +281,13 @@ async def on_guild_join(guild):
     general = find(lambda x: x.name == 'general', guild.text_channels)
     if general:
         title = "Greetings"
-        description = f"```Hello {guild.name}! I am a simple bot that can "
-        "send updates (new articles) from FINSHOTS website to "
-        "a specific channel in a server or to individual "
-        "users on their DM eveyday at the time specified by "
-        "user.``` "
+        description = (
+            f"```Hello {guild.name}! I am a simple bot that can "
+            "send updates (new articles) from FINSHOTS website to "
+            "a specific channel in a server or to individual "
+            "users on their DM eveyday at the time specified by "
+            "user.``` "
+        )
         em = discord.Embed(title=title, description=description,
                            colour=discord.Colour.blue())
         em.add_field(name="Use Help Command to learn how to use",
