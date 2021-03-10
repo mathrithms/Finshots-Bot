@@ -16,7 +16,13 @@ Host = os.getenv('DB_HOST')
 Password = os.getenv('DB_PASSWORD')
 Database = os.getenv('DB_DATABASE')
 
-db = mc.connect(user=User, host=Host, password=Password, database=Database)
+db = mc.connect(
+    user=User,
+    host=Host,
+    password=Password,
+    database=Database,
+    autocommit=True
+)
 cur = db.cursor()
 
 # storing links to be scrapped
