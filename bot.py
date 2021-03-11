@@ -191,20 +191,20 @@ async def stop(ctx):
             "Done! You won't recieve Finshots updates here from now")
 
 
-@ client.command(aliases=['lucky', 'feeling_lucky'])
-async def feeling(ctx):
-    """send a random article"""
+@ client.command(aliases=['lucky', 'feeling', 'random'])
+async def feeling_lucky(ctx, category=None):
+    """send a random article from the bot database
+    optional argument for random article from specific category
+    syntax -> feeling_lucky <category>"""
 
     # extracting all articles
-    category = ['daily', 'brief', 'markets', 'infographics']
-    articles = []
+    if category is None:
+        cur.execute('select * from articles;')
+    else:
+        cur.execute(f"select * from articles where category='{category}'")
+    articles = cur.fetchall()
 
-    for value in category:
-        cur.execute(
-            "select links, title, category, link_date from articles "
-            f"where category='{value}';")
-        articles += cur.fetchall()
-
+    # posting a random one
     article = random.choice(articles)
 
     if article[2] == 'infographics':
