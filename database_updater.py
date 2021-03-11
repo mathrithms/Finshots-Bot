@@ -67,22 +67,11 @@ for url in URL:
         except (mc.errors.IntegrityError, mc.errors.ProgrammingError):
             pass
 
-    # deleting data that is not required
-    if URL[url] == 'daily':
-        # storing only the links that were updated in last 3 days for archives
-        cur.execute(
-            f"delete from articles where category='{URL[url]}' and"
-            " timestampdiff(day, link_date, curdate())>2 ;"
-        )
-    else:
-        # storing only last 2 links for all other links
-        cur.execute(
-            "delete from articles where link_date "
-            "not in(select link_date from"
-            "(select link_date from articles where category="
-            f"'{URL[url]}' order by link_date desc limit 2)fo) "
-            f" and category='{URL[url]}'"
-        )
+    # deleting data that is not required (over a year old)
+    cur.execute(
+        f"delete from articles where category='{URL[url]}' and"
+        " timestampdiff(day, link_date, curdate())>365 ;"
+    )
 
     db.commit()
 
