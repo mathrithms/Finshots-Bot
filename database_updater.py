@@ -1,4 +1,4 @@
-"""his script when run will extract article links from the Finshots website
+"""This script when run will extract article links from the Finshots website
  and update the links table in database"""
 
 import datetime
