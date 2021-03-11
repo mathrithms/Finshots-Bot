@@ -41,8 +41,13 @@ cur.execute(
 
 print('Database created succesfully')
 
-# feeding in data to the article
+# feeding in articles to the database
 os.system('database_updater.py')
+
+# setting older articles update_time to 3 days back to avoid spam
+cur.execute(
+    "update articles set update_time = date_sub(curdate(), interval 3 day)"
+    " where link_date != curdate();")
 
 # closing the database connection
 cur.close()
