@@ -183,26 +183,27 @@ async def stop(ctx):
         await ctx.send(
             "Done! You won't recieve Finshots updates here from now")
 
-@ client.command(aliases=['lucky','feeling_lucky'])
+
+@ client.command(aliases=['lucky', 'feeling_lucky'])
 async def feeling(ctx):
     """send a random article"""
 
     # extracting all articles
-
     category = ['daily', 'brief', 'markets', 'infographics']
     articles = []
+
     for value in category:
         cur.execute(
             "select links, title, category, link_date from articles "
             f"where category='{value}';")
-        articles += cur.fetchall()	
-  
+        articles += cur.fetchall()
+
     article = random.choice(articles)
-            
+
     if article[2] == 'infographics':
         await ctx.send(
             f'> **FINSHOTS {(article[2]).upper()}**\n'
-            f'> {article[1]}   **|**   '    
+            f'> {article[1]}   **|**   '
             f'`{article[3]}`')
         await ctx.send(article[0])
     else:
@@ -210,6 +211,7 @@ async def feeling(ctx):
             f'>>> **FINSHOTS {(article[2]).upper()}**\n'
             f'{article[1]}   **|**   '
             f'`{article[3]}`\n{article[0]}')
+
 
 @ client.command()
 async def latest(ctx, category='daily'):
@@ -296,6 +298,11 @@ async def help(ctx):
         " in the bot database"
         "\nsyntax :  latest <category name> (optional argument)"
         "\ncategory names :  daily, markets, brief, infographics```",
+        inline=False)
+    em.add_field(
+        name="feeling lucky",
+        value="```sends a random article"
+        "\nsyntax :  feeling lucky```",
         inline=False)
     await ctx.send(embed=em)
 
