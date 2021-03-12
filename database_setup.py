@@ -2,9 +2,12 @@
 env file And create a fresh database with the required structure for the
 finshots_scout code to function """
 
+import datetime
 import os
 
 import mysql.connector as mc
+import requests
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 # making the connection to database
@@ -41,14 +44,55 @@ cur.execute(
 
 print('Database created succesfully')
 
-# feeding in articles to the database
-os.system('database_updater.py')
+# feeding in data to the database
+category = {
+    "https://finshots.in/archive": "daily",
+    "https://finshots.in/brief/": "brief",
+    "https://finshots.in/markets/": "markets",
+    "https://finshots.in/infographic/": "infographics"
+}
+for url in category:
+
+    # fetching no. of pages the category has
+    r1 = requests.get(url).content
+    soup = BeautifulSoup(r1, 'html.parser')
+    div = soup.find('div', class_='inner')
+    page_string = div.find('nav').find('span').text
+    pages = int(page_string.split()[-1])
+
+    #scrapping from each page
+    for i in range(1,pages+1):
+        r = requests.get(f"{url}/page/{i}").content
+        soup = BeautifulSoup(r, 'html.parser')
+        div = soup.find('div', class_='post-feed')
+        articles = div.find_all('article')
+
+        for item in articles:
+            # scrapping the data
+            article = {
+                'title': item.find('img')['alt'],
+                'link_date': item.find('time')['datetime']
+            }
+            if category[url] == 'infographics':
+                article['link'] = item.find('img')['src']
+            else:
+                article['link'] = "https://finshots.in" + item.find('a')['href']
+
+            now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
+
+            # updating links into articles table
+            sql = ("insert into articles values(%s,%s,%s, %s, %s);")
+            val = (article['link'], article['title'],
+                category[url], article['link_date'], now)
+            cur.execute(sql, val)
+            db.commit()
 
 # setting older articles update_time to 3 days back to avoid spam
 cur.execute(
     "update articles set update_time = date_sub(curdate(), interval 3 day)"
     " where link_date != curdate();")
 
+print('database updated with all articles!')
 # closing the database connection
 cur.close()
 db.close()
