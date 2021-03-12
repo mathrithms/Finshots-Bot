@@ -9,6 +9,8 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
+print('updating database with fresh articles...')
+
 # making the connection to database
 load_dotenv()
 User = os.getenv('DB_USER')
@@ -66,8 +68,8 @@ for url in category:
         except (mc.errors.IntegrityError, mc.errors.ProgrammingError):
             pass
 
-print('database updated with latest articles!')
-
 # closing connection to the database
 cur.close()
 db.close()
+
+print('success! database updated with latest articles!')

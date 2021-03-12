@@ -10,6 +10,8 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
+print('creating mysql database...')
+
 # making the connection to database
 
 load_dotenv()
@@ -42,7 +44,8 @@ cur.execute(
     "varchar(200), category varchar(20), link_date date, "
     "update_time datetime);")
 
-print('Database created succesfully')
+print('success! database created succesfully')
+print('feeding in articles into the database...')
 
 # feeding in data to the database
 category = {
@@ -92,7 +95,8 @@ cur.execute(
     "update articles set update_time = date_sub(curdate(), interval 3 day)"
     " where link_date != curdate();")
 
-print('database updated with all articles!')
 # closing the database connection
 cur.close()
 db.close()
+
+print('success! database updated with all articles!')
