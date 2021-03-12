@@ -63,8 +63,8 @@ for url in category:
     page_string = div.find('nav').find('span').text
     pages = int(page_string.split()[-1])
 
-    #scrapping from each page
-    for i in range(1,pages+1):
+    # scrapping from each page
+    for i in range(1, pages+1):
         r = requests.get(f"{url}/page/{i}").content
         soup = BeautifulSoup(r, 'html.parser')
         div = soup.find('div', class_='post-feed')
@@ -79,14 +79,15 @@ for url in category:
             if category[url] == 'infographics':
                 article['link'] = item.find('img')['src']
             else:
-                article['link'] = "https://finshots.in" + item.find('a')['href']
+                article['link'] = ("https://finshots.in"
+                                   + item.find('a')['href'])
 
             now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
 
             # updating links into articles table
             sql = ("insert into articles values(%s,%s,%s, %s, %s);")
             val = (article['link'], article['title'],
-                category[url], article['link_date'], now)
+                   category[url], article['link_date'], now)
             cur.execute(sql, val)
             db.commit()
 
