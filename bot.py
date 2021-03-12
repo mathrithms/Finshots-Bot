@@ -191,11 +191,19 @@ async def stop(ctx):
             "Done! You won't recieve Finshots updates here from now")
 
 
-@ client.command(aliases=['lucky', 'feeling', 'random'])
+@ client.command(aliases=['random'])
 async def feeling_lucky(ctx, category=None):
     """send a random article from the bot database
     optional argument for random article from specific category
     syntax -> feeling_lucky <category>"""
+
+    typos = {
+        'briefs': 'brief',
+        'market': 'markets',
+        'infographic': 'infographics'
+        }
+    if category in typos.keys():
+        category = typos[category]
 
     # extracting all articles
     if category is None:
@@ -239,6 +247,118 @@ async def latest(ctx, category='daily'):
     articles = cur.fetchall()
 
     for article in articles:
+        if article[2] == 'infographics':
+            await ctx.send(
+                f'> **FINSHOTS {(article[2]).upper()}**\n'
+                f'> {article[1]}   **|**   '
+                f'`{article[3]}`')
+            await ctx.send(article[0])
+        else:
+            await ctx.send(
+                f'>>> **FINSHOTS {(article[2]).upper()}**\n'
+                f'{article[1]}   **|**   '
+                f'`{article[3]}`\n{article[0]}')
+
+
+@client.command()
+async def search(ctx, *, text):
+    """searches for an article/infographics with title in the bot database
+    syntax -> search <search_term>"""
+
+    cur.execute(
+        f"select * from articles where title like '%{text}%';")
+    results = cur.fetchall()
+
+    if len(results) == 0:
+        await ctx.send('No such articles/infographics found')
+
+    elif len(results) == 1:
+        article = results[0]
+
+        if article[2] == 'infographics':
+            await ctx.send(
+                f'> **FINSHOTS {(article[2]).upper()}**\n'
+                f'> {article[1]}   **|**   '
+                f'`{article[3]}`')
+            await ctx.send(article[0])
+        else:
+            await ctx.send(
+                f'>>> **FINSHOTS {(article[2]).upper()}**\n'
+                f'{article[1]}   **|**   '
+                f'`{article[3]}`\n{article[0]}')
+
+    else:
+        options = "Reply with desired number or 'cancel'\n\n"
+        for y in range(1, len(results) + 1):
+            options += (
+                f"{y}) {results[y-1][1]} **|** "
+                f"`{results[y-1][2]}` **|** "
+                f"`{results[y-1][3]}`\n")
+        await ctx.send(options)
+
+        reply = await client.wait_for(
+            'message', check=lambda message: message.author == ctx.author)
+        if reply.content not in list(map(str, list(range(1, len(results)+1)))):
+            await ctx.send('Search cancelled')
+            return
+        article = results[int(reply.content)-1]
+
+        if article[2] == 'infographics':
+            await ctx.send(
+                f'> **FINSHOTS {(article[2]).upper()}**\n'
+                f'> {article[1]}   **|**   '
+                f'`{article[3]}`')
+            await ctx.send(article[0])
+        else:
+            await ctx.send(
+                f'>>> **FINSHOTS {(article[2]).upper()}**\n'
+                f'{article[1]}   **|**   '
+                f'`{article[3]}`\n{article[0]}')
+
+
+@client.command(aliases=['date search'])
+async def date_search(ctx, text):
+    """searches for an article/infographics with date in the bot database
+    syntax -> fetch <date> (in YYY-MM-DD format)"""
+
+    cur.execute(
+        f"select * from articles where link_date = '{text}';")
+    results = cur.fetchall()
+
+    if len(results) == 0:
+        await ctx.send('No articles/infographics found for this date')
+
+    elif len(results) == 1:
+        article = results[0]
+
+        if article[2] == 'infographics':
+            await ctx.send(
+                f'> **FINSHOTS {(article[2]).upper()}**\n'
+                f'> {article[1]}   **|**   '
+                f'`{article[3]}`')
+            await ctx.send(article[0])
+        else:
+            await ctx.send(
+                f'>>> **FINSHOTS {(article[2]).upper()}**\n'
+                f'{article[1]}   **|**   '
+                f'`{article[3]}`\n{article[0]}')
+
+    else:
+        options = "Reply with desired number or 'cancel'\n\n"
+        for y in range(1, len(results) + 1):
+            options += (
+                f"{y}) {results[y-1][1]} **|** "
+                f"`{results[y-1][2]}` **|** "
+                f"`{results[y-1][3]}`\n")
+        await ctx.send(options)
+
+        reply = await client.wait_for(
+            'message', check=lambda message: message.author == ctx.author)
+        if reply.content not in list(map(str, list(range(1, len(results)+1)))):
+            await ctx.send('Search cancelled')
+            return
+        article = results[int(reply.content)-1]
+
         if article[2] == 'infographics':
             await ctx.send(
                 f'> **FINSHOTS {(article[2]).upper()}**\n'

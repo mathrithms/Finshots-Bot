@@ -1,4 +1,4 @@
-"""his script when run will extract article links from the Finshots website
+"""This script when run will extract article links from the Finshots website
  and update the links table in database"""
 
 import datetime
@@ -8,6 +8,8 @@ import mysql.connector as mc
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+
+print('updating database with fresh articles...')
 
 # making the connection to database
 load_dotenv()
@@ -25,8 +27,7 @@ db = mc.connect(
 )
 cur = db.cursor()
 
-# storing links to be scrapped
-URL = {
+category = {
     "https://finshots.in/archive": "daily",
     "https://finshots.in/brief/": "brief",
     "https://finshots.in/markets/": "markets",
@@ -34,7 +35,7 @@ URL = {
 }
 
 # inserting data for each category
-for url in URL:
+for url in category:
 
     # fetching source code of the link
     r = requests.get(url).content
@@ -49,7 +50,7 @@ for url in URL:
             'title': item.find('img')['alt'],
             'link_date': item.find('time')['datetime']
         }
-        if URL[url] == 'infographics':
+        if category[url] == 'infographics':
             article['link'] = item.find('img')['src']
         else:
             article['link'] = "https://finshots.in" + item.find('a')['href']
@@ -60,23 +61,15 @@ for url in URL:
         try:
             sql = ("insert into articles values(%s,%s,%s, %s, %s);")
             val = (article['link'], article['title'],
-                   URL[url], article['link_date'], now)
+                   category[url], article['link_date'], now)
             cur.execute(sql, val)
             db.commit()
 
         except (mc.errors.IntegrityError, mc.errors.ProgrammingError):
             pass
 
-    # deleting data that is not required (over a year old)
-    cur.execute(
-        f"delete from articles where category='{URL[url]}' and"
-        " timestampdiff(day, link_date, curdate())>365 ;"
-    )
-
-    db.commit()
-
-print('database updated with latest articles!')
-
 # closing connection to the database
 cur.close()
 db.close()
+
+print('success! database updated with latest articles!')
