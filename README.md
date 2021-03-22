@@ -40,3 +40,5 @@ Look for open issues and try to solve them, for discussion or any other help fro
 
 # Special Thanks 
 [Devlup labs](https://devluplabs.ml/)
+
+[Devlup Labs Logo](https://img.shields.io/badge/Developed%20under-Winter%20of%20Code%2C%20DevlUp%20Labs-blue)
