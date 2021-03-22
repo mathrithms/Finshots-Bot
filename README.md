@@ -40,4 +40,4 @@ Look for open issues and try to solve them, for discussion or any other help fro
 
 # Special Thanks 
 [Devlup labs](https://devluplabs.ml/)
-<a href="https://devlup-labs.github.io"><img src="https://img.shields.io/badge/Maintained%20under-Winter%20of%20Code%2C%20DevlUp%20Labs-brightgreen"/></a>
+<a href="https://devlup-labs.github.io"><img src="https://img.shields.io/badge/Developed%20under-Winter%20of%20Code%2C%20DevlUp%20Labs-brightgreen"/></a>
