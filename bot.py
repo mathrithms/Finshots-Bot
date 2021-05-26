@@ -261,9 +261,16 @@ async def latest(ctx, category='daily'):
 
 
 @client.command()
-async def search(ctx, *, text):
+async def search(ctx, *, text=None):
     """searches for an article/infographics with title in the bot database
     syntax -> search <search_term>"""
+
+    if text is None:
+        await ctx.send(
+            "What do you want to search?")
+        msg = await client.wait_for(
+            'message', check=lambda message: ctx.author == message.author)
+        text = msg.content
 
     cur.execute(
         f"select * from articles where title like '%{text}%';")
@@ -288,13 +295,20 @@ async def search(ctx, *, text):
                 f'`{article[3]}`\n{article[0]}')
 
     else:
-        options = "Reply with desired number or 'cancel'\n\n"
+        options = ''
         for y in range(1, len(results) + 1):
-            options += (
-                f"{y}) {results[y-1][1]} **|** "
-                f"`{results[y-1][2]}` **|** "
+            option = (
+                f"{y}) [{results[y-1][1]}]({results[y-1][0]})  **|**  "
+                f"`{results[y-1][2]}`  **|**  "
                 f"`{results[y-1][3]}`\n")
-        await ctx.send(options)
+            if len(options) + len(option) >= 2047:
+                em = discord.Embed(description=options)
+                await ctx.send(embed=em)
+                options = ''
+            options += option
+        else:
+            em = discord.Embed(description=options)
+            await ctx.send(embed=em)
 
         reply = await client.wait_for(
             'message', check=lambda message: message.author == ctx.author)
@@ -321,6 +335,13 @@ async def date_search(ctx, text):
     """searches for an article/infographics with date in the bot database
     syntax -> fetch <date> (in YYY-MM-DD format)"""
 
+    if text is None:
+        await ctx.send(
+            "What date do you want to search (in YYY-MM-DD format)?")
+        msg = await client.wait_for(
+            'message', check=lambda message: ctx.author == message.author)
+        text = msg.content
+
     cur.execute(
         f"select * from articles where link_date = '{text}';")
     results = cur.fetchall()
@@ -344,13 +365,20 @@ async def date_search(ctx, text):
                 f'`{article[3]}`\n{article[0]}')
 
     else:
-        options = "Reply with desired number or 'cancel'\n\n"
+        options = ''
         for y in range(1, len(results) + 1):
-            options += (
-                f"{y}) {results[y-1][1]} **|** "
-                f"`{results[y-1][2]}` **|** "
+            option = (
+                f"{y}) [{results[y-1][1]}]({results[y-1][0]})  **|**  "
+                f"`{results[y-1][2]}`  **|**  "
                 f"`{results[y-1][3]}`\n")
-        await ctx.send(options)
+            if len(options) + len(option) >= 2047:
+                em = discord.Embed(description=options)
+                await ctx.send(embed=em)
+                options = ''
+            options += option
+        else:
+            em = discord.Embed(description=options)
+            await ctx.send(embed=em)
 
         reply = await client.wait_for(
             'message', check=lambda message: message.author == ctx.author)
@@ -385,16 +413,12 @@ async def help(ctx):
                discord.Colour.green(), discord.Colour.teal(),
                discord.Colour.orange()]
     em = discord.Embed(
-        description="**FINSHOTS HELP**\n\n",
-        colour=random.choice(colours)
-    )
-    em.add_field(
-        name="**Description**",
-        value="```This is a simple bot that can send updates (new "
+        title="**FINSHOTS HELP**\n\n",
+        description="```This is a simple bot that can send updates (new "
         "articles) from FINSHOTS website to a specific "
         "channel in a server or to individual users on their "
         "DM everyday at the time specified by user.```\n",
-        inline=False
+        colour=random.choice(colours)
     )
     em.add_field(
         name="**BOT COMMANDS:**  _(can be run in a both channels or "
@@ -418,19 +442,22 @@ async def help(ctx):
         name="stop",
         value="```stop Finshots updates for the channel/DM\nsyntax "
         ":  stop```",
-        inline=False)
+        inline=False
+    )
     em.add_field(
         name="latest",
         value="```sends the latest articles of the specified category stored"
         " in the bot database"
         "\nsyntax :  latest <category name> (optional argument)"
         "\ncategory names :  daily, markets, brief, infographics```",
-        inline=False)
+        inline=False
+    )
     em.add_field(
         name="feeling lucky",
         value="```sends a random article"
         "\nsyntax :  feeling lucky```",
-        inline=False)
+        inline=False
+    )
     await ctx.send(embed=em)
 
 
