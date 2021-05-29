@@ -169,8 +169,7 @@ async def start(ctx, time=None, timezone=None):
         time = str(h) + ':' + str(m)
 
         cur.execute(
-            f"insert into channels values('{channel_id}','{time + ':00'}', \
-            '{timezone}');")
+            f"insert into channels values('{channel_id}','{time + ':00'}');")
         db.commit()
         await ctx.send(
             f"Done! Finshots updates will be sent here everyday at {time}")
