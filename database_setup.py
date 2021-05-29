@@ -32,7 +32,8 @@ cur = db.cursor()
 cur.execute(f'drop database if exists {Database};')
 cur.execute(f'create database {Database};')
 cur.execute(f'use {Database};')
-
+cur.execute("set names 'utf8';")
+cur.execute("set character set utf8;")
 # creating table for channel ids and time
 cur.execute(
     'create table channels (channel_id varchar(25) primary key, '
