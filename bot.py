@@ -127,7 +127,8 @@ async def on_ready():
 @ client.command()
 async def start(ctx, time=None, timezone=None):
     """start  Finshots updates in the channel/DM at a specified time
-    syntax -> start HH:MM (24 hr. clock format) (-)HH:MM (timezone relative to UTC)"""
+    syntax -> start HH:MM (24 hr. clock format) (-)HH:MM \
+    (timezone relative to UTC)"""
 
     channel_id = ctx.channel.id
     cur.execute(f"select * from channels where channel_id = '{channel_id}';")
@@ -151,7 +152,7 @@ async def start(ctx, time=None, timezone=None):
 
         tz = list(map(int, timezone.split(":")))
         t = datetime.datetime.strptime(time, "%H:%M")
-        
+
         if tz[0] < 0:
             t = t - datetime.timedelta(hours=tz[0], minutes=-(tz[1]))
         else:
@@ -168,10 +169,12 @@ async def start(ctx, time=None, timezone=None):
         time = str(h) + ':' + str(m)
 
         cur.execute(
-            f"insert into channels values('{channel_id}','{time + ':00'}', '{timezone}');")
+            f"insert into channels values('{channel_id}','{time + ':00'}', \
+            '{timezone}');")
         db.commit()
         await ctx.send(
             f"Done! Finshots updates will be sent here everyday at {time}")
+
 
 @ client.command()
 async def update_time(ctx, time=None, timezone=None):
@@ -191,7 +194,7 @@ async def update_time(ctx, time=None, timezone=None):
             msg = await client.wait_for(
                 'message', check=lambda message: message.author == ctx.author)
             time = msg.content
-        
+
             await ctx.send(
                 "Specify the timezone in (-)HH:MM format (relative to UTC))")
             msg = await client.wait_for(
@@ -200,7 +203,7 @@ async def update_time(ctx, time=None, timezone=None):
 
         tz = list(map(int, timezone.split(":")))
         t = datetime.datetime.strptime(time, "%H:%M")
-        
+
         if tz[0] < 0:
             t = t - datetime.timedelta(hours=tz[0], minutes=-(tz[1]))
         else:
