@@ -490,12 +490,6 @@ async def help(ctx):
         inline=False
     )
     em.add_field(
-        name="update_timezone",
-        value="```update timezone of the channel/DM for the Finshots "
-        "updates\nsyntax :  update_timezone (-)HH:MM (relative to UTC)```",
-        inline=False
-    )
-    em.add_field(
         name="stop",
         value="```stop Finshots updates for the channel/DM\nsyntax "
         ":  stop```",
