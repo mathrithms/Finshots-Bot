@@ -150,6 +150,7 @@ async def start(ctx, time=None, timezone=None):
                 'message', check=lambda message: ctx.author == message.author)
             timezone = msg.content
 
+        temp = time
         tz = list(map(int, timezone.split(":")))
         t = datetime.datetime.strptime(time, "%H:%M")
 
@@ -172,13 +173,14 @@ async def start(ctx, time=None, timezone=None):
             f"insert into channels values('{channel_id}','{time + ':00'}');")
         db.commit()
         await ctx.send(
-            f"Done! Finshots updates will be sent here everyday at {time}")
+            f"Done! Finshots updates will be sent here everyday at {temp}")
 
 
 @ client.command()
 async def update_time(ctx, time=None, timezone=None):
-    """update time of the channel/DM for the Finshots updates
-    syntax -> update_time HH:MM (24 hr. clock format)"""
+    """update time and timezone of the channel/DM for the Finshots updates
+    syntax -> update_time HH:MM (24 hr. clock format) (-)HH:MM
+    (timezone relative to UTC)"""
 
     channel_id = ctx.channel.id
     cur.execute(f"select * from channels where channel_id = '{channel_id}';")
@@ -200,6 +202,7 @@ async def update_time(ctx, time=None, timezone=None):
                 'message', check=lambda message: message.author == ctx.author)
             timezone = msg.content
 
+        temp = time
         tz = list(map(int, timezone.split(":")))
         t = datetime.datetime.strptime(time, "%H:%M")
 
@@ -223,7 +226,7 @@ async def update_time(ctx, time=None, timezone=None):
             f" channel_id='{channel_id}';")
         db.commit()
         await ctx.send(
-            f"Done! Finshots updates will now be sent here everyday at {time}")
+            f"Done! Finshots updates will now be sent here everyday at {temp}")
 
 
 @ client.command()
@@ -479,14 +482,14 @@ async def help(ctx):
         name="start",
         value="```start  Finshots updates in the channel/DM at a "
         "specified time\nsyntax :  start HH:MM (24 hr. clock "
-        "format)```",
+        "format) (-)HH:MM (timezone relative to UTC)```",
         inline=False
     )
     em.add_field(
         name="update_time",
         value="```update time of the channel/DM for the Finshots "
         "updates\nsyntax :  update_time HH:MM (24 hr. clock "
-        "format)```",
+        "format) (-)HH:MM (timezone relative to UTC)```",
         inline=False
     )
     em.add_field(
