@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """this is the file that will run 24*7 on the server"""
 
-import asyncio
 import datetime
 import os
 import random
@@ -89,7 +88,7 @@ async def on_ready():
 
     link_poster.start()  # starts the above task
 
-    @tasks.loop(hours=24)
+    @tasks.loop(days=10)
     async def repo():
         """Sends the repository link with a probability of 1/200 each day"""
 
@@ -100,26 +99,20 @@ async def on_ready():
         # sending the repo link randomly with low probability
         for ch_id in channelid:
             channel = client.get_channel(int(ch_id[0]))
-            p = random.randint(1, 200)
-            if p == 101:
+            p = random.randint(1, 20)
+            if p == 3:
                 await channel.send(
                     ">>> Check out our Github Repository :"
                     "\nhttps://github.com/mathrithms/Finshots-Bot")
     repo.start()
 
-    # changes the activity/status of the bot on discord
-    while not client.is_closed():
-        names = {
-            'playing': f"on {len(client.guilds)} servers",
-            'listening': f"{prefix}help"}
-        types = {
-            'playing': discord.ActivityType.playing,
-            'listening': discord.ActivityType.listening}
-        activity = random.choice(['playing', 'listening'])
-        await client.change_presence(
-            activity=discord.Activity(type=types[activity],
-                                      name=names[activity]))
-        await asyncio.sleep(10)
+    # set the activity/status of the bot on discord
+    await client.change_presence(
+        activity=discord.Activity(
+            type=discord.ActivityType.listening,
+            name=f"{prefix}help"
+        )
+    )
 
 
 # BOT COMMANDS
