@@ -104,7 +104,8 @@ async def on_ready():
                 await channel.send(
                     ">>> Check out our Github Repository :"
                     "\nhttps://github.com/mathrithms/Finshots-Bot")
-    repo.start()
+
+    repo.start()  # starts the above task
 
     # set the activity/status of the bot on discord
     await client.change_presence(
@@ -278,7 +279,7 @@ async def feeling_lucky(ctx, category=None):
 @ client.command()
 async def latest(ctx, category='daily'):
     """sends the latest articles of the specified category stored in
-    the bot database syntax -> latest <category name>"""
+    the bot database syntax -> latest <category name (default daily)>"""
 
     typos = {
         'briefs': 'brief',
