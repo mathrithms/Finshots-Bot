@@ -29,7 +29,7 @@ db = mc.connect(
 cur = db.cursor()
 
 # bot code
-prefix = 'test '
+prefix = 'finshots '
 client = commands.Bot(
     command_prefix=[f"{prefix}", "Finshots ", "FINSHOTS ", "finshot ",
                     "Finshot ", "FINSHOT "], case_insensitive=True)
