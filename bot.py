@@ -29,7 +29,7 @@ db = mc.connect(
 cur = db.cursor()
 
 # bot code
-prefix = 'finshots '
+prefix = 'test '
 client = commands.Bot(
     command_prefix=[f"{prefix}", "Finshots ", "FINSHOTS ", "finshot ",
                     "Finshot ", "FINSHOT "], case_insensitive=True)
@@ -88,7 +88,7 @@ async def on_ready():
 
     link_poster.start()  # starts the above task
 
-    @tasks.loop(days=10)
+    @tasks.loop(hours=240)
     async def repo():
         """Sends the repository link with a probability of 1/200 each day"""
 
@@ -104,7 +104,8 @@ async def on_ready():
                 await channel.send(
                     ">>> Check out our Github Repository :"
                     "\nhttps://github.com/mathrithms/Finshots-Bot")
-    repo.start()
+
+    repo.start()  # starts the above task
 
     # set the activity/status of the bot on discord
     await client.change_presence(
@@ -118,108 +119,92 @@ async def on_ready():
 # BOT COMMANDS
 
 @ client.command()
-async def start(ctx, time=None, timezone=None):
+async def start(ctx, time=None, *, timezone='[+5:30]'):
     """start  Finshots updates in the channel/DM at a specified time
-    syntax -> start HH:MM (24 hr. clock format) (-)HH:MM \
-    (timezone relative to UTC)"""
+    syntax -> start HH:MM (24 hr. clock) timezone [+/-HH:MM] (w.r.t UTC)
+    note -> timezone parameter is optional, default is IST [+5:30]"""
 
     channel_id = ctx.channel.id
-    cur.execute(f"select * from channels where channel_id = '{channel_id}';")
-    if cur.fetchall() != []:
+
+    if time is None:
         await ctx.send(
-            "This channel/DM is already registered for Finshots updates! Use "
-            "the update_time command to update the time for updates")
+            ">>> Please use the command again with a time mentioned\nsyntax ->"
+            " start HH:MM (24 hr. clock) timezone [+/-HH:MM] (w.r.t UTC)\n"
+            "note -> timezone parameter is optional, default is IST [+5:30]")
+        return
+
+    timezone = timezone[timezone.index('[')+1:timezone.index(']')]
+    sign = '-' if '-' in timezone else '+'
+    if '+' in timezone or '-' in timezone:
+        timezone = timezone[1:]
+
+    ti = datetime.datetime.strptime(time, "%H:%M")
+    timez = list(map(int, timezone.split(":")))
+    tz = datetime.timedelta(hours=timez[0], minutes=timez[1])
+
+    if sign == '-':
+        ti += tz
     else:
-        if time is None:
-            await ctx.send(
-                "Specify the time in HH:MM format (24 hr. clock format)")
-            msg = await client.wait_for(
-                'message', check=lambda message: ctx.author == message.author)
-            time = msg.content
+        ti -= tz
 
-            await ctx.send(
-                "Specify the timezone in (-)HH:MM format (relative to UTC)")
-            msg = await client.wait_for(
-                'message', check=lambda message: ctx.author == message.author)
-            timezone = msg.content
+    time1 = f"{str(ti.hour)}:{str(ti.minute)}:{ti.second}"
 
-        temp = time
-        tz = list(map(int, timezone.split(":")))
-        t = datetime.datetime.strptime(time, "%H:%M")
-
-        if tz[0] < 0:
-            t = t - datetime.timedelta(hours=tz[0], minutes=-(tz[1]))
-        else:
-            t = t - datetime.timedelta(hours=tz[0], minutes=tz[1])
-
-        h = t.hour
-        m = t.minute
-
-        if h < 10:
-            h = '0' + str(h)
-        if m < 10:
-            m = '0' + str(m)
-
-        time = str(h) + ':' + str(m)
-
-        cur.execute(
-            f"insert into channels values('{channel_id}','{time + ':00'}');")
+    try:
+        cur.execute(f"insert into channels values('{channel_id}','{time1}');")
         db.commit()
         await ctx.send(
-            f"Done! Finshots updates will be sent here everyday at {temp}")
+            f">>> Done! Finshots updates will be sent here everyday at"
+            f"  **{time}**  `[UTC {sign}{timezone}]`")
+    except (mc.errors.IntegrityError):
+        await ctx.send(
+            ">>> This channel/DM is already registered for Finshots updates!\n"
+            "Use the update_time command to update the time for updates")
 
 
 @ client.command()
-async def update_time(ctx, time=None, timezone=None):
+async def update_time(ctx, time=None, *, timezone='[+5:30]'):
     """update time and timezone of the channel/DM for the Finshots updates
-    syntax -> update_time HH:MM (24 hr. clock format) (-)HH:MM
-    (timezone relative to UTC)"""
+    syntax -> update_time HH:MM (24 hr. clock) timezone [+/-HH:MM] (w.r.t UTC)
+    note -> timezone parameter is optional, default is IST [UTC +5:30]"""
 
     channel_id = ctx.channel.id
-    cur.execute(f"select * from channels where channel_id = '{channel_id}';")
-    if cur.fetchall() == []:
+
+    if time is None:
         await ctx.send(
-            "This channel/DM is not registered for Finshots updates! Use the "
-            "start command to register the channel")
+            ">>> Please use the command again with a time mentioned\nsyntax ->"
+            " start HH:MM (24 hr. clock) timezone [+/-HH:MM] (w.r.t UTC)\nnote"
+            " -> timezone parameter is optional, default is IST [UTC +5:30]")
+        return
+
+    timezone = timezone[timezone.index('[')+1:timezone.index(']')]
+    sign = '-' if '-' in timezone else '+'
+    if '+' in timezone or '-' in timezone:
+        timezone = timezone[1:]
+
+    ti = datetime.datetime.strptime(time, "%H:%M")
+    timez = list(map(int, timezone.split(":")))
+    tz = datetime.timedelta(hours=timez[0], minutes=timez[1])
+
+    if sign == '-':
+        ti += tz
     else:
-        if time is None:
-            await ctx.send(
-                "Specify the time in HH:MM format (24 hr. clock format)")
-            msg = await client.wait_for(
-                'message', check=lambda message: message.author == ctx.author)
-            time = msg.content
+        ti -= tz
 
-            await ctx.send(
-                "Specify the timezone in (-)HH:MM format (relative to UTC))")
-            msg = await client.wait_for(
-                'message', check=lambda message: message.author == ctx.author)
-            timezone = msg.content
+    time1 = f"{str(ti.hour)}:{str(ti.minute)}:{ti.second}"
 
-        temp = time
-        tz = list(map(int, timezone.split(":")))
-        t = datetime.datetime.strptime(time, "%H:%M")
-
-        if tz[0] < 0:
-            t = t - datetime.timedelta(hours=tz[0], minutes=-(tz[1]))
-        else:
-            t = t - datetime.timedelta(hours=tz[0], minutes=tz[1])
-
-        h = t.hour
-        m = t.minute
-
-        if h < 10:
-            h = '0' + str(h)
-        if m < 10:
-            m = '0' + str(m)
-
-        time = str(h) + ':' + str(m)
-
-        cur.execute(
-            f"update channels set time='{time}' where"
-            f" channel_id='{channel_id}';")
-        db.commit()
+    cur.execute(
+        f"update channels set time='{time1}' where"
+        f" channel_id='{channel_id}';")
+    db.commit()
+    if cur.rowcount == 0:
         await ctx.send(
-            f"Done! Finshots updates will now be sent here everyday at {temp}")
+            ">>> This channel is not registered for finshots updates.\n"
+            "Use the start command to start getting finshots updates here."
+        )
+    else:
+        await ctx.send(
+            f">>> Done! Finshots updates will now be sent here everyday at"
+            f"  **{time}**  `[UTC {sign}{timezone}]`")
 
 
 @ client.command()
@@ -232,10 +217,10 @@ async def stop(ctx):
     db.commit()
     if cur.rowcount == 0:
         await ctx.send(
-            "This channel/DM was never registered for Finshots updates!")
+            ">>> This channel/DM is not registered for Finshots updates!")
     else:
         await ctx.send(
-            "Done! You won't recieve Finshots updates here from now")
+            ">>> Done! You won't recieve Finshots updates here from now")
 
 
 @ client.command(aliases=['random'])
@@ -278,7 +263,7 @@ async def feeling_lucky(ctx, category=None):
 @ client.command()
 async def latest(ctx, category='daily'):
     """sends the latest articles of the specified category stored in
-    the bot database syntax -> latest <category name>"""
+    the bot database syntax -> latest <category name (default daily)>"""
 
     typos = {
         'briefs': 'brief',
@@ -310,17 +295,18 @@ async def latest(ctx, category='daily'):
 @client.command()
 async def search(ctx, *, text=None):
     """searches for an article/infographics with title in the bot database
+    fetches latest 10 matching articles
     syntax -> search <search_term>"""
 
     if text is None:
         await ctx.send(
-            "What do you want to search?")
-        msg = await client.wait_for(
-            'message', check=lambda message: ctx.author == message.author)
-        text = msg.content
+            "Please run the command again with a term/phrase to search for\n"
+            "syntax -> search <search_term>")
+        return
 
     cur.execute(
-        f"select * from articles where title like '%{text}%';")
+        f"select * from articles where title like '%{text}%'"
+        " order by link_Date desc limit 10;")
     results = cur.fetchall()
 
     if len(results) == 0:
@@ -357,40 +343,22 @@ async def search(ctx, *, text=None):
             em = discord.Embed(description=options)
             await ctx.send(embed=em)
 
-        reply = await client.wait_for(
-            'message', check=lambda message: message.author == ctx.author)
-        if reply.content not in list(map(str, list(range(1, len(results)+1)))):
-            await ctx.send('Search cancelled')
-            return
-        article = results[int(reply.content)-1]
 
-        if article[2] == 'infographics':
-            await ctx.send(
-                f'> **FINSHOTS {(article[2]).upper()}**\n'
-                f'> {article[1]}   **|**   '
-                f'`{article[3]}`')
-            await ctx.send(article[0])
-        else:
-            await ctx.send(
-                f'>>> **FINSHOTS {(article[2]).upper()}**\n'
-                f'{article[1]}   **|**   '
-                f'`{article[3]}`\n{article[0]}')
-
-
-@client.command(aliases=['date search'])
-async def date_search(ctx, text):
+@client.command()
+async def date_search(ctx, text=None):
     """searches for an article/infographics with date in the bot database
-    syntax -> fetch <date> (in YYY-MM-DD format)"""
+    fetches latest 10 matching articles
+    syntax -> date_search <date> (in YYY-MM-DD format)"""
 
     if text is None:
         await ctx.send(
-            "What date do you want to search (in YYY-MM-DD format)?")
-        msg = await client.wait_for(
-            'message', check=lambda message: ctx.author == message.author)
-        text = msg.content
+            "Please use the command again with a date to search for\n"
+            "syntax -> date_search <date> (in YYY-MM-DD format)")
+        return
 
     cur.execute(
-        f"select * from articles where link_date = '{text}';")
+        f"select * from articles where link_date = '{text}'"
+        " order by link_date limit 10;")
     results = cur.fetchall()
 
     if len(results) == 0:
@@ -426,25 +394,6 @@ async def date_search(ctx, text):
         else:
             em = discord.Embed(description=options)
             await ctx.send(embed=em)
-
-        reply = await client.wait_for(
-            'message', check=lambda message: message.author == ctx.author)
-        if reply.content not in list(map(str, list(range(1, len(results)+1)))):
-            await ctx.send('Search cancelled')
-            return
-        article = results[int(reply.content)-1]
-
-        if article[2] == 'infographics':
-            await ctx.send(
-                f'> **FINSHOTS {(article[2]).upper()}**\n'
-                f'> {article[1]}   **|**   '
-                f'`{article[3]}`')
-            await ctx.send(article[0])
-        else:
-            await ctx.send(
-                f'>>> **FINSHOTS {(article[2]).upper()}**\n'
-                f'{article[1]}   **|**   '
-                f'`{article[3]}`\n{article[0]}')
 
 
 # Help commands
