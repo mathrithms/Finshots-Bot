@@ -8,7 +8,6 @@ import random
 import discord
 import mysql.connector as mc
 from discord.ext import commands, tasks
-from discord.utils import find
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -543,8 +542,8 @@ async def help(ctx, category='main'):
 async def on_guild_join(guild):
     """bot will send a welcome message when it joins a server"""
 
-    general = find(lambda x: x.name == 'general', guild.text_channels)
-    if general:
+    system_channel = guild.system_channel
+    if system_channel:
         em = discord.Embed(
             title="**GREETINGS**",
             description=f"```Hello {guild.name}! I am a simple bot that can "
@@ -567,7 +566,7 @@ async def on_guild_join(guild):
             "and click on message to DM the bot```",
             inline=False
         )
-        await general.send(embed=em)
+        await system_channel.send(embed=em)
 
 
 # launching the bot
