@@ -29,7 +29,7 @@ db = mc.connect(
 cur = db.cursor()
 
 # bot code
-prefix = 'finshots '
+prefix = 'test '
 client = commands.Bot(
     command_prefix=[f"{prefix}", "Finshots ", "FINSHOTS ", "finshot ",
                     "Finshot ", "FINSHOT "], case_insensitive=True)
@@ -261,7 +261,7 @@ async def feeling_lucky(ctx, category=None):
 
 
 @ client.command()
-async def latest(ctx, category='daily'):
+async def latest(ctx, category=None):
     """sends the latest articles of the specified category stored in
     the bot database syntax -> latest <category name (default daily)>"""
 
@@ -273,9 +273,16 @@ async def latest(ctx, category='daily'):
     if category in typos.keys():
         category = typos[category]
 
-    cur.execute(
-        f"select * from articles where category='{category}' and link_date = "
-        f"(select max(link_date) from articles where category='{category}');")
+    if category is None:
+        cur.execute(
+            "select * from articles where link_date = "
+            "(select max(link_date) from articles);"
+            )
+    else:
+        cur.execute(
+            f"select * from articles where category='{category}' and link_date"
+            f"=(select max(link_date) from articles where category='{category}"
+            "');")
     articles = cur.fetchall()
 
     for article in articles:
@@ -402,59 +409,134 @@ client.remove_command('help')
 
 
 @ client.group(invoke_without_command=True)
-async def help(ctx):
+async def help(ctx, category='main'):
     """displays the help for the bot in an embed"""
 
     colours = [discord.Colour.red(), discord.Colour.blue(),
                discord.Colour.green(), discord.Colour.teal(),
                discord.Colour.orange()]
-    em = discord.Embed(
+    main = discord.Embed(
         title="**FINSHOTS HELP**\n\n",
-        description="```This is a simple bot that can send updates (new "
+        description="```I am a simple bot that can send updates (new "
         "articles) from FINSHOTS website to a specific "
         "channel in a server or to individual users on their "
-        "DM everyday at the time specified by user.```\n",
+        "DM everyday at the time specified by user. And I have some more "
+        "interesting features revolving the Finshots website.```\n",
         colour=random.choice(colours)
     )
-    em.add_field(
-        name="**BOT COMMANDS:**  _(can be run in a both channels or "
-        "in DM to the bot)_",
-        value="```prefix : finshots```", inline=False)
-    em.add_field(
-        name="start",
-        value="```start  Finshots updates in the channel/DM at a "
-        "specified time\nsyntax :  start HH:MM (24 hr. clock "
-        "format) (-)HH:MM (timezone relative to UTC)```",
+    main.add_field(
+        name="BOT COMMANDS:",
+        value="```PREFIX : finshots \n"
+        "use this prefix before every command!\n"
+        "NOTE : commands can be run in a both channels or in DM to the bot```"
+        "\nCOMMANDS CATEGORY WISE :",
         inline=False
     )
-    em.add_field(
+    main.add_field(
+        name="**updates**",
+        value="```\nstart\nupdate_time\nstop```",
+        inline=True
+    )
+    main.add_field(
+        name="**fetching**",
+        value="```\nlatest\nrandom```",
+        inline=True
+    )
+    main.add_field(
+        name="**searching**",
+        value="```\nsearch\ndate_search```",
+        inline=True
+    )
+    main.add_field(
+        name="FURTHER HELP",
+        value="```use : help <category/command>"
+        "\nto see the command details```",
+        inline=False
+    )
+
+    updates = discord.Embed(
+        title="**UPDATES COMMANDS HELP**\n\n",
+        colour=random.choice(colours)
+    )
+    updates.add_field(
+        name="start",
+        value="```start Finshots updates in the channel/DM at a "
+        "specified time\nSYNTAX :  start HH:MM (24 hr. clock) "
+        "timezone [+/-HH:MM] (w.r.t UTC)\nNOTE : timezone parameter "
+        "is optional, default is IST [+5:30]```",
+        inline=False
+    )
+    updates.add_field(
         name="update_time",
         value="```update time of the channel/DM for the Finshots "
-        "updates\nsyntax :  update_time HH:MM (24 hr. clock "
-        "format) (-)HH:MM (timezone relative to UTC)```",
+        "updates\nSYNTAX :  update_time HH:MM (24 hr. clock) "
+        "timezone [+/-HH:MM] (w.r.t UTC)\nNOTE : timezone parameter "
+        "is optional, default is IST [+5:30]```",
         inline=False
     )
-    em.add_field(
+    updates.add_field(
         name="stop",
-        value="```stop Finshots updates for the channel/DM\nsyntax "
+        value="```stop Finshots updates for the channel/DM\nSYNTAX "
         ":  stop```",
         inline=False
     )
-    em.add_field(
+
+    fetching = discord.Embed(
+        title="**FETCHING COMMANDS HELP**\n\n",
+        colour=random.choice(colours)
+    )
+    fetching.add_field(
         name="latest",
         value="```sends the latest articles of the specified category stored"
         " in the bot database"
-        "\nsyntax :  latest <category name> (optional argument)"
-        "\ncategory names :  daily, markets, brief, infographics```",
+        "\nSYNTAX :  latest <category name>"
+        "\nNOTE : <category name> is optional"
+        "\nCATEGORY NAMES :  daily, markets, brief, infographics```",
         inline=False
     )
-    em.add_field(
-        name="feeling lucky",
-        value="```sends a random article"
-        "\nsyntax :  feeling lucky```",
+    fetching.add_field(
+        name="random / feeling_lucky",
+        value="```sends a random article of the specified category stored"
+        " in the bot database"
+        "\nSYNTAX :  random/feeling_lucky <category name>"
+        "\nNOTE : <category name> is optional"
+        "\nCATEGORY NAMES :  daily, markets, brief, infographics```",
         inline=False
     )
-    await ctx.send(embed=em)
+
+    searching = discord.Embed(
+        title="**SEARCHING COMMANDS HELP**\n\n",
+        colour=random.choice(colours)
+    )
+    searching.add_field(
+        name="search",
+        value="```Search the finshots database for any article/infographic "
+        "based on keyword/phrase in article title, result will have latest"
+        " 1o matching results\nSYNTAX :  search <search term/phrase>```",
+        inline=False
+    )
+    searching.add_field(
+        name="date_search",
+        value="```Search the finshots database for any article/infographic "
+        "based on publish date, result will have latest 10 matching "
+        "results\nSYNTAX :  date_search <date> (in YYY-MM-DD format)```",
+        inline=False
+    )
+
+    if category in ['start', 'update_time', 'stop']:
+        category = 'updates'
+    elif category in ['latest', 'random', 'feeling_lucky']:
+        category = 'fetching'
+    elif category in ['search', 'date_search']:
+        category = 'searching'
+
+    embeds = {
+        'main': main,
+        'updates': updates,
+        'fetching': fetching,
+        'searching': searching
+    }
+    await ctx.send(embed=embeds[category])
 
 
 @ client.event
@@ -463,25 +545,28 @@ async def on_guild_join(guild):
 
     general = find(lambda x: x.name == 'general', guild.text_channels)
     if general:
-        title = "Greetings"
-        description = (
-            f"```Hello {guild.name}! I am a simple bot that can "
+        em = discord.Embed(
+            title="**GREETINGS**",
+            description=f"```Hello {guild.name}! I am a simple bot that can "
             "send updates (new articles) from FINSHOTS website to "
             "a specific channel in a server or to individual "
             "users on their DM eveyday at the time specified by "
-            "user.``` "
+            "user. And I have some more interesting features "
+            "revolving the Finshots website.``` ",
+            colour=discord.Colour.blue()
         )
-        em = discord.Embed(title=title, description=description,
-                           colour=discord.Colour.blue())
-        em.add_field(name="Use Help Command to learn how to use",
-                     value=f"```{prefix} help```", inline=False)
+        em.add_field(
+            name="HOW TO USE?",
+            value=f"```{prefix}help```", inline=False
+        )
         em.add_field(
             name="NOTE:",
             value="```This bot and all its commands work in server "
             "channels for server use as well as in DM for "
             "personal use. Feel free to right click the bot "
             "and click on message to DM the bot```",
-            inline=False)
+            inline=False
+        )
         await general.send(embed=em)
 
 
