@@ -456,7 +456,7 @@ async def help(ctx, category='main'):
     main.add_field(
         name="**Ping**",
         value="```Use **finshots ping** to check the network latency of the \
-            bot",
+            bot```",
         inline=False
     )
     main.add_field(
