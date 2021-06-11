@@ -402,6 +402,13 @@ async def date_search(ctx, text=None):
             await ctx.send(embed=em)
 
 
+@client.command()
+async def ping(ctx):
+    """displays the network latency of the bot"""
+
+    await ctx.send(f"Ping: {round(client.latency * 1000)} ms")
+
+
 # Help commands
 
 client.remove_command('help')
@@ -445,6 +452,12 @@ async def help(ctx, category='main'):
         name="**searching**",
         value="```\nsearch\ndate_search```",
         inline=True
+    )
+    main.add_field(
+        name="**Ping**",
+        value="```Use **finshots ping** to check the network latency of the \
+            bot",
+        inline=False
     )
     main.add_field(
         name="FURTHER HELP",
