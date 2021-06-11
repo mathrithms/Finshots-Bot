@@ -461,7 +461,7 @@ async def help(ctx, category='main'):
     )
     main.add_field(
         name="FURTHER HELP",
-        value="```use : help <category/command>"
+        value="```use : help <category/command>```"
         "\nto see the command details```",
         inline=False
     )
