@@ -133,3 +133,7 @@ dmypy.json
 
 # vscode project settings
 .vscode
+
+# pipenv
+Pipfile
+Pipfile.lock
