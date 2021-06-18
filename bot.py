@@ -401,6 +401,10 @@ async def date_search(ctx, text=None):
             em = discord.Embed(description=options)
             await ctx.send(embed=em)
 
+@client.command(aliases=['sc'])
+async def server_count(ctx):
+    await ctx.send(f"{client.user.mention} is playing on `{len(client.guilds)} servers`")
+
 
 @client.command()
 async def ping(ctx):
