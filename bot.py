@@ -402,6 +402,12 @@ async def date_search(ctx, text=None):
             await ctx.send(embed=em)
 
 
+@client.command(aliases=['sc'])
+async def server_count(ctx):
+    servers = len(client.guilds)
+    await ctx.send(f"{client.user.mention} is playing on `{servers} servers`")
+
+
 @client.command()
 async def ping(ctx):
     """displays the network latency of the bot"""
