@@ -6,32 +6,35 @@ import os
 import random
 
 import discord
-import mysql.connector as mc
+import psycopg
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
+# loading environment variables
 load_dotenv()
-
-# making the connection to database
 User = os.getenv('DB_USER')
 Host = os.getenv('DB_HOST')
 Password = os.getenv('DB_PASSWORD')
-Database = os.getenv('DB_DATABASE')
+DBname = os.getenv('DB_NAME')
 
-db = mc.connect(
+# making the connection to database
+db = psycopg.connect(
     user=User,
     host=Host,
     password=Password,
-    database=Database,
+    dbname=DBname,
     autocommit=True
 )
 cur = db.cursor()
 
 # bot code
-prefix = 'finshots '
-client = commands.Bot(
-    command_prefix=[f"{prefix}", "Finshots ", "FINSHOTS ", "finshot ",
-                    "Finshot ", "FINSHOT "], case_insensitive=True)
+prefix = "finshots "
+intents = discord.Intents.default()
+intents.message_content = True
+client = commands.Bot(command_prefix=[
+    "finshots ", "Finshots ", "FINSHOTS ", "finshot ", "Finshot ", "FINSHOT "
+    ], case_insensitive=True, intents=intents
+)
 
 
 @client.event
@@ -48,24 +51,30 @@ async def on_ready():
 
         # extracting channel ids to send the articles at this time (minute)
         cur.execute(
-            "select channel_id from channels where time_to_sec(timediff("
-            "curtime(),time)) between 0 and 59")
+            "SELECT channel_id "
+            "FROM channels "
+            "WHERE EXTRACT(EPOCH FROM (CURRENT_TIME - time)) "
+            "BETWEEN 0 AND 59;"
+        )
         channelid = cur.fetchall()
 
         if len(channelid) == 0:
             return
 
-        # extracting the articles that are updated in the database withing
+        # extracting the articles that are updated in the database within
         # past 24 hours from now
-        now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
 
         category = ['daily', 'brief', 'markets', 'infographics']
         articles = []
         for value in category:
             cur.execute(
-                "select links, title, category, link_date from articles "
-                f"where category='{value}' and "
-                f"timestampdiff(minute, update_time, '{now}') < 1440;")
+                "SELECT links, title, category, link_date "
+                "FROM articles "
+                "WHERE category=%s "
+                "AND EXTRACT (EPOCH FROM (CURRENT_TIMESTAMP - update_time)) "
+                "/ 60 < 1440;",
+                (value,)
+            )
             articles += cur.fetchall()
 
         # sending the articles in the required channels
@@ -92,7 +101,7 @@ async def on_ready():
         """Sends the repository link with a probability of 1/200 each day"""
 
         # extracting all channel ids
-        cur.execute("select channel_id from channels")
+        cur.execute("SELECT channel_id FROM channels;")
         channelid = cur.fetchall()
 
         # sending the repo link randomly with low probability
@@ -117,7 +126,7 @@ async def on_ready():
 
 # BOT COMMANDS
 
-@ client.command()
+@client.command()
 async def start(ctx, time=None, *, timezone='[+5:30]'):
     """start  Finshots updates in the channel/DM at a specified time
     syntax -> start HH:MM (24 hr. clock) timezone [+/-HH:MM] (w.r.t UTC)
@@ -149,18 +158,17 @@ async def start(ctx, time=None, *, timezone='[+5:30]'):
     time1 = f"{str(ti.hour)}:{str(ti.minute)}:{ti.second}"
 
     try:
-        cur.execute(f"insert into channels values('{channel_id}','{time1}');")
-        db.commit()
+        cur.execute("INSERT INTO channels VALUES(%s,%s);", (channel_id, time1))
         await ctx.send(
             f">>> Done! Finshots updates will be sent here everyday at"
             f"  **{time}**  `[UTC {sign}{timezone}]`")
-    except (mc.errors.IntegrityError):
+    except (psycopg.errors.IntegrityError):
         await ctx.send(
             ">>> This channel/DM is already registered for Finshots updates!\n"
             "Use the update_time command to update the time for updates")
 
 
-@ client.command()
+@client.command()
 async def update_time(ctx, time=None, *, timezone='[+5:30]'):
     """update time and timezone of the channel/DM for the Finshots updates
     syntax -> update_time HH:MM (24 hr. clock) timezone [+/-HH:MM] (w.r.t UTC)
@@ -192,9 +200,9 @@ async def update_time(ctx, time=None, *, timezone='[+5:30]'):
     time1 = f"{str(ti.hour)}:{str(ti.minute)}:{ti.second}"
 
     cur.execute(
-        f"update channels set time='{time1}' where"
-        f" channel_id='{channel_id}';")
-    db.commit()
+        "UPDATE channels SET time=%s WHERE channel_id=%s;",
+        (time1, channel_id)
+    )
     if cur.rowcount == 0:
         await ctx.send(
             ">>> This channel is not registered for finshots updates.\n"
@@ -206,14 +214,13 @@ async def update_time(ctx, time=None, *, timezone='[+5:30]'):
             f"  **{time}**  `[UTC {sign}{timezone}]`")
 
 
-@ client.command()
+@client.command()
 async def stop(ctx):
     """stop Finshots updates for the channel/DM
     syntax -> stop"""
 
     channel_id = ctx.channel.id
-    cur.execute(f"delete from channels  where channel_id='{channel_id}';")
-    db.commit()
+    cur.execute("DELETE FROM channels WHERE channel_id=%s;", (channel_id,))
     if cur.rowcount == 0:
         await ctx.send(
             ">>> This channel/DM is not registered for Finshots updates!")
@@ -222,7 +229,7 @@ async def stop(ctx):
             ">>> Done! You won't recieve Finshots updates here from now")
 
 
-@ client.command(aliases=['random'])
+@client.command(aliases=['random'])
 async def feeling_lucky(ctx, category=None):
     """send a random article from the bot database
     optional argument for random article from specific category
@@ -238,9 +245,9 @@ async def feeling_lucky(ctx, category=None):
 
     # extracting all articles
     if category is None:
-        cur.execute('select * from articles;')
+        cur.execute('SELECT * FROM articles;')
     else:
-        cur.execute(f"select * from articles where category='{category}'")
+        cur.execute("SELECT * FROM articles WHERE category=%s;", (category,))
     articles = cur.fetchall()
 
     # posting a random one
@@ -259,7 +266,7 @@ async def feeling_lucky(ctx, category=None):
             f'`{article[3]}`\n{article[0]}')
 
 
-@ client.command()
+@client.command()
 async def latest(ctx, category=None):
     """sends the latest articles of the specified category stored in
     the bot database syntax -> latest <category name (default daily)>"""
@@ -274,14 +281,16 @@ async def latest(ctx, category=None):
 
     if category is None:
         cur.execute(
-            "select * from articles where link_date = "
-            "(select max(link_date) from articles);"
+            "SELECT * FROM articles "
+            "WHERE link_date = (SELECT MAX(link_date) FROM articles);"
             )
     else:
         cur.execute(
-            f"select * from articles where category='{category}' and link_date"
-            f"=(select max(link_date) from articles where category='{category}"
-            "');")
+            "SELECT * FROM articles WHERE category=%s "
+            "AND link_date = (SELECT MAX(link_date) FROM articles "
+            "WHERE category=%s);",
+            (category, category)
+        )
     articles = cur.fetchall()
 
     for article in articles:
@@ -301,7 +310,7 @@ async def latest(ctx, category=None):
 @client.command()
 async def search(ctx, *, text=None):
     """searches for an article/infographics with title in the bot database
-    fetches latest 10 matching articles
+    fetches latest 20 matching articles
     syntax -> search <search_term>"""
 
     if text is None:
@@ -311,8 +320,9 @@ async def search(ctx, *, text=None):
         return
 
     cur.execute(
-        f"select * from articles where title like '%{text}%'"
-        " order by link_Date desc limit 10;")
+        "SELECT * FROM articles WHERE title ILIKE %s "
+        "ORDER BY link_Date DESC LIMIT 20;", (f"%{text}%",)
+    )
     results = cur.fetchall()
 
     if len(results) == 0:
@@ -353,8 +363,8 @@ async def search(ctx, *, text=None):
 @client.command()
 async def date_search(ctx, text=None):
     """searches for an article/infographics with date in the bot database
-    fetches latest 10 matching articles
-    syntax -> date_search <date> (in YYY-MM-DD format)"""
+    fetches matching articles
+    syntax -> date_search <date> (in YYYY-MM-DD format)"""
 
     if text is None:
         await ctx.send(
@@ -363,12 +373,14 @@ async def date_search(ctx, text=None):
         return
 
     cur.execute(
-        f"select * from articles where link_date = '{text}'"
-        " order by link_date limit 10;")
+        "SELECT * FROM articles WHERE link_date = %s "
+        "ORDER BY link_date", (text,)
+    )
     results = cur.fetchall()
 
     if len(results) == 0:
-        await ctx.send('No articles/infographics found for this date')
+        await ctx.send('No articles/infographics found for this date. '
+                       '\nMake sure your are using `YYYY-MM-DD` format')
 
     elif len(results) == 1:
         article = results[0]
@@ -420,7 +432,7 @@ async def ping(ctx):
 client.remove_command('help')
 
 
-@ client.group(invoke_without_command=True)
+@client.group(invoke_without_command=True)
 async def help(ctx, category='main'):
     """displays the help for the bot in an embed"""
 
@@ -556,7 +568,7 @@ async def help(ctx, category='main'):
     await ctx.send(embed=embeds[category])
 
 
-@ client.event
+@client.event
 async def on_guild_join(guild):
     """bot will send a welcome message when it joins a server"""
 

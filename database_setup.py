@@ -1,26 +1,43 @@
 """This file will delete existing database if any with the provided name in
 env file And create a fresh database with the required structure for the
-finshots_scout code to function """
+finshots_bot code to function """
 
 import datetime
 import os
-
-import mysql.connector as mc
+import psycopg
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
-print('creating mysql database...')
-
-# making the connection to database
-
+# loading environment variables
 load_dotenv()
 User = os.getenv('DB_USER')
 Host = os.getenv('DB_HOST')
 Password = os.getenv('DB_PASSWORD')
-Database = os.getenv('DB_DATABASE')
+DBname = os.getenv('DB_NAME')
 
-db = mc.connect(
+
+print('creating postgreSQL database...')
+
+# connecting to postgreSQL main database
+conn = psycopg.connect(
+    dbname='postgres',
+    user=User,
+    host=Host,
+    password=Password,
+    autocommit=True
+)
+cur = conn.cursor()
+
+# creating a new database
+cur.execute(f"DROP DATABASE IF EXISTS {DBname};")
+cur.execute(f"CREATE DATABASE {DBname} WITH ENCODING 'UTF8';")
+cur.close()
+conn.close()
+
+# connecting to the created database
+db = psycopg.connect(
+    dbname=DBname,
     user=User,
     host=Host,
     password=Password,
@@ -28,22 +45,22 @@ db = mc.connect(
 )
 cur = db.cursor()
 
-# creating database
-cur.execute(f'drop database if exists {Database};')
-cur.execute(f'create database {Database};')
-cur.execute(f'use {Database};')
-cur.execute("set names 'utf8';")
-cur.execute("set character set utf8;")
 # creating table for channel ids and time
 cur.execute(
-    'create table channels (channel_id varchar(25) primary key, '
-    'time time);')
+    "CREATE TABLE channels ("
+    "channel_id BIGINT PRIMARY KEY, "
+    "time TIME);"
+)
 
 # creating table for storing the links
 cur.execute(
-    "create table articles (links varchar(200) primary key, title "
-    "varchar(200), category varchar(20), link_date date, "
-    "update_time datetime);")
+    "CREATE TABLE articles ("
+    "links VARCHAR(200) PRIMARY KEY, "
+    "title VARCHAR(200), "
+    "category VARCHAR(20), "
+    "link_date DATE, "
+    "update_time TIMESTAMP);"
+)
 
 print('success! database created succesfully')
 print('feeding in articles into the database...')
@@ -80,13 +97,14 @@ for url in category:
             if category[url] == 'infographics':
                 article['link'] = item.find('img')['src']
             else:
-                article['link'] = ("https://finshots.in"
-                                   + item.find('a')['href'])
+                article['link'] = (
+                    "https://finshots.in" + item.find('a')['href']
+                )
 
-            now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
+            now = datetime.datetime.now().strftime(r"%Y-%m-%d %H:%M:%S")
 
             # updating links into articles table
-            sql = ("insert into articles values(%s,%s,%s, %s, %s);")
+            sql = ("INSERT INTO articles VALUES(%s,%s,%s,%s,%s);")
             val = (article['link'], article['title'],
                    category[url], article['link_date'], now)
             cur.execute(sql, val)
@@ -94,10 +112,11 @@ for url in category:
 
 # setting older articles update_time to 3 days back to avoid spam
 cur.execute(
-    "update articles set update_time = date_sub(curdate(), interval 3 day)"
-    " where link_date != curdate();")
+    "UPDATE articles "
+    "SET update_time = CURRENT_DATE - INTERVAL '3 days' "
+    "WHERE link_date != CURRENT_DATE;"
+)
 
-# closing the database connection
 cur.close()
 db.close()
 
