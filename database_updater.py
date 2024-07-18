@@ -4,25 +4,28 @@
 import datetime
 import os
 
-import mysql.connector as mc
+import psycopg
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
-print('updating database with fresh articles...')
-
-# making the connection to database
+# loading environment variables
 load_dotenv()
 User = os.getenv('DB_USER')
 Host = os.getenv('DB_HOST')
 Password = os.getenv('DB_PASSWORD')
-Database = os.getenv('DB_DATABASE')
+DBname = os.getenv('DB_NAME')
 
-db = mc.connect(
+
+print('updating database with fresh articles...')
+
+# making the connection to database
+
+db = psycopg.connect(
+    dbname=DBname,
     user=User,
     host=Host,
     password=Password,
-    database=Database,
     autocommit=True
 )
 cur = db.cursor()
@@ -55,17 +58,20 @@ for url in category:
         else:
             article['link'] = "https://finshots.in" + item.find('a')['href']
 
-        now = datetime.datetime.now().strftime(r"%Y:%m:%d %H:%M:%S")
+        now = datetime.datetime.now().strftime(r"%Y-%m-%d %H:%M:%S")
 
         # updating links into articles table
         try:
-            sql = ("insert into articles values(%s,%s,%s, %s, %s);")
+            sql = ("INSERT INTO articles VALUES(%s,%s,%s,%s,%s);")
             val = (article['link'], article['title'],
                    category[url], article['link_date'], now)
             cur.execute(sql, val)
             db.commit()
 
-        except (mc.errors.IntegrityError, mc.errors.ProgrammingError):
+        except (
+            psycopg.errors.IntegrityError,
+            psycopg.errors.ProgrammingError
+        ):
             pass
 
 # closing connection to the database
