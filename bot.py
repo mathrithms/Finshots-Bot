@@ -28,10 +28,12 @@ db = psycopg.connect(
 cur = db.cursor()
 
 # bot code
-prefix = 'finshots '
+prefix = "finshots "
+intents = discord.Intents.default()
+intents.message_content = True
 client = commands.Bot(command_prefix=[
-    f"{prefix}", "Finshots ", "FINSHOTS ", "finshot ", "Finshot ", "FINSHOT "
-    ], case_insensitive=True
+    "finshots ", "Finshots ", "FINSHOTS ", "finshot ", "Finshot ", "FINSHOT "
+    ], case_insensitive=True, intents=intents
 )
 
 
